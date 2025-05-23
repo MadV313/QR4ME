@@ -8,7 +8,17 @@ def _load_admin_users():
     if not os.path.exists(ADMIN_USERS_FILE):
         return {}
     with open(ADMIN_USERS_FILE, "r") as f:
-        return json.load(f)
+        data = json.load(f)
+    # Auto-migrate old flat formats to valid structure
+    fixed = {}
+    for sid, value in data.items():
+        if isinstance(value, list):
+            fixed[sid] = {"permitted_users": value}
+        elif isinstance(value, dict) and "permitted_users" in value:
+            fixed[sid] = value
+        else:
+            fixed[sid] = {"permitted_users": []}
+    return fixed
 
 def _save_admin_users(data):
     os.makedirs(os.path.dirname(ADMIN_USERS_FILE), exist_ok=True)
@@ -26,19 +36,16 @@ def is_admin_user(interaction) -> bool:
         user_id = str(interaction.user.id)
         user_roles = [str(role.id) for role in getattr(interaction.user, "roles", [])]
 
-        # Load server-specific permitted users
         data = _load_admin_users()
         permitted = data.get(server_id, {}).get("permitted_users", [])
 
         if user_id in permitted:
             return True
 
-        # Load fallback config.json roles (shared/global fallback)
         with open(CONFIG_PATH, "r") as f:
             config = json.load(f)
 
         admin_roles = config.get("admin_roles", [])
-
         return any(role_id in admin_roles for role_id in user_roles)
 
     except Exception as e:
@@ -48,9 +55,12 @@ def is_admin_user(interaction) -> bool:
 def add_admin_user(user_id: int, server_id: str):
     data = _load_admin_users()
     user_id_str = str(user_id)
+    server_id = str(server_id)
 
     if server_id not in data:
         data[server_id] = {"permitted_users": []}
+    elif "permitted_users" not in data[server_id]:
+        data[server_id]["permitted_users"] = []
 
     if user_id_str not in data[server_id]["permitted_users"]:
         data[server_id]["permitted_users"].append(user_id_str)
@@ -59,6 +69,7 @@ def add_admin_user(user_id: int, server_id: str):
 def remove_admin_user(user_id: int, server_id: str) -> bool:
     data = _load_admin_users()
     user_id_str = str(user_id)
+    server_id = str(server_id)
 
     if server_id not in data or user_id_str not in data[server_id].get("permitted_users", []):
         return False
