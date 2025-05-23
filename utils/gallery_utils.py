@@ -8,7 +8,7 @@ GALLERY_JSON = "data/gallery.json"
 LATEST_PREVIEW_JSON = "data/previews.json"
 LATEST_OUTPUT_JSON = "data/output_build.json"
 
-def save_to_gallery(preview_path, zip_path, metadata: dict):
+def save_to_gallery(preview_path, zip_path, metadata: dict, server_id: str = "Unknown"):
     os.makedirs(GALLERY_DIR, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     base_name = metadata["object_type"] + "_" + timestamp
@@ -28,14 +28,15 @@ def save_to_gallery(preview_path, zip_path, metadata: dict):
     except FileNotFoundError:
         gallery = []
 
-    # Add new entry
+    # Add new entry with server_id
     entry = {
         "image": f"gallery/{base_name}.png",
         "zip": f"gallery/{base_name}.zip",
         "object_type": metadata["object_type"],
         "qr_size": metadata["qr_size"],
         "total_objects": metadata["total_objects"],
-        "created": timestamp
+        "created": timestamp,
+        "server_id": server_id
     }
     gallery.append(entry)
 
