@@ -5,7 +5,6 @@ import json
 OBJECT_CLASS_MAP = {
     "ImprovisedContainer": "Land_Container_1Mo",
     "SmallProtectiveCase": "SmallProtectorCase",
-    "SmallProtectorCase": "SmallProtectorCase",
     "DryBag_Black": "DryBag_Black",
     "PlasticBottle": "PlasticBottle",
     "CookingPot": "CookingPot",
