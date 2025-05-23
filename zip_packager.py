@@ -20,10 +20,12 @@ QR Code Build Summary
 {extra_text.strip()}
 """.strip()
 
-    readme_path = "outputs/README.txt"
+    # Write README.txt to the same output directory as the zip
+    readme_path = os.path.join(os.path.dirname(zip_output_path), "README.txt")
     with open(readme_path, "w") as f:
         f.write(readme_content)
 
+    # Create the ZIP package
     with zipfile.ZipFile(zip_output_path, 'w') as zipf:
         zipf.write(object_json_path, arcname="objects.json")
         zipf.write(preview_image_path, arcname="qr_preview.png")
