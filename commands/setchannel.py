@@ -39,8 +39,9 @@ class SetChannel(commands.Cog):
             )
             return
 
-        # Save the channel assignment
-        save_channel(type.value, str(target.id))
+        # Save the channel ID under this guild
+        guild_id = str(interaction.guild.id)
+        save_channel(guild_id, type.value, str(target.id))
 
         await interaction.response.send_message(
             f"✅ `{type.name}` successfully assigned to {target.mention}.",
