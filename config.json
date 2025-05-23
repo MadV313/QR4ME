@@ -16,9 +16,9 @@
   "gallery_url": "https://yourdomain.com/public/gallery.html",
 
   "admin_roles": [
-    "YOUR_ADMIN_ROLE_ID_1",
-    "YOUR_ADMIN_ROLE_ID_2"
+    "1173052585830264832",
+    "1173049392371085392"
   ],
 
-  "permitted_users": []
+  "permitted_users": [1291903774872567898]
 }
