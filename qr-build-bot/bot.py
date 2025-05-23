@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import os
+
 from config import CONFIG
 from qr_generator import generate_qr_matrix, qr_to_object_list, save_object_json
 from preview_renderer import render_qr_preview
@@ -20,6 +21,13 @@ async def on_ready():
     except Exception as e:
         print(f"❌ Sync failed: {e}")
 
+# --- Optional: Check for Admin Role IDs ---
+def is_admin(interaction: discord.Interaction):
+    if not CONFIG["admin_roles"]:
+        return True  # allow if no roles defined
+    user_roles = [str(role.id) for role in interaction.user.roles]
+    return any(role in CONFIG["admin_roles"] for role in user_roles)
+
 # --- Slash Command: /qrbuild ---
 @bot.tree.command(name="qrbuild", description="Convert text into a DayZ object QR layout")
 @app_commands.describe(
@@ -28,6 +36,10 @@ async def on_ready():
     object_type="DayZ object to use (default: SmallProtectorCase)"
 )
 async def qrbuild(interaction: discord.Interaction, text: str, scale: float = 1.0, object_type: str = "SmallProtectorCase"):
+    if not is_admin(interaction):
+        await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
+        return
+
     await interaction.response.defer()
 
     # Step 1: Generate QR matrix
@@ -66,7 +78,7 @@ async def qrbuild(interaction: discord.Interaction, text: str, scale: float = 1.
 
     await interaction.followup.send("✅ QR build generated and posted in admin channel.")
 
-# --- Launch ---
+# --- Launch Bot ---
 if __name__ == "__main__":
     token = os.getenv("DISCORD_BOT_TOKEN") or CONFIG["discord_token"]
     bot.run(token)
