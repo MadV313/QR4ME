@@ -2,10 +2,17 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import json
+from config import CONFIG
 
 class SetOrigin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    def is_admin(self, interaction: discord.Interaction):
+        if not CONFIG["admin_roles"]:
+            return True
+        user_roles = [str(role.id) for role in interaction.user.roles]
+        return any(role in CONFIG["admin_roles"] for role in user_roles)
 
     @app_commands.command(name="setorigin", description="Update the origin position for QR placement")
     @app_commands.describe(
@@ -14,7 +21,9 @@ class SetOrigin(commands.Cog):
         z="Z coordinate"
     )
     async def setorigin(self, interaction: discord.Interaction, x: float, z: float, y: float = 0.0):
-        from config import CONFIG  # Reloadable in dev
+        if not self.is_admin(interaction):
+            await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
+            return
 
         try:
             with open("config.json", "r") as f:
@@ -30,12 +39,12 @@ class SetOrigin(commands.Cog):
                 json.dump(data, f, indent=2)
 
             await interaction.response.send_message(
-                f"📍 New origin set:\n`X: {x}`\n`Y: {y}`\n`Z: {z}`",
+                f"📍 **New origin position set:**\n"
+                f"> `X`: {x}\n> `Y`: {y}\n> `Z`: {z}",
                 ephemeral=True
             )
         except Exception as e:
             await interaction.response.send_message(f"❌ Failed to update origin: {e}", ephemeral=True)
 
-# ✅ This is the correct setup pattern
 async def setup(bot):
     await bot.add_cog(SetOrigin(bot))
