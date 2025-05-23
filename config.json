@@ -14,8 +14,11 @@
   "zip_output_path": "outputs/qr_code.zip",
 
   "gallery_url": "https://yourdomain.com/public/gallery.html",
+
   "admin_roles": [
     "YOUR_ADMIN_ROLE_ID_1",
     "YOUR_ADMIN_ROLE_ID_2"
-  ]
+  ],
+
+  "permitted_users": []
 }
