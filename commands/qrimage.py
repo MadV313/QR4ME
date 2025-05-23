@@ -10,17 +10,12 @@ from config import CONFIG
 from qr_generator import generate_qr_matrix, qr_to_object_list, save_object_json
 from preview_renderer import render_qr_preview
 from zip_packager import create_qr_zip
-from utils.channel_utils import get_channel_id  # ✅ NEW
+from utils.channel_utils import get_channel_id
+from utils.permissions import is_admin_user  # ✅ Centralized admin check
 
 class QRImage(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
-    def is_admin(self, interaction: discord.Interaction):
-        if not CONFIG["admin_roles"]:
-            return True
-        user_roles = [str(role.id) for role in interaction.user.roles]
-        return any(role in CONFIG["admin_roles"] for role in user_roles)
 
     @app_commands.command(name="qrimage", description="Upload a QR code image to generate a DayZ object layout")
     @app_commands.describe(
@@ -46,7 +41,7 @@ class QRImage(commands.Cog):
         object_type: app_commands.Choice[str],
         scale: float = 1.0
     ):
-        if not self.is_admin(interaction):
+        if not is_admin_user(interaction):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
             return
 
