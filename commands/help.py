@@ -13,6 +13,7 @@ class Help(commands.Cog):
             description="Here are the available commands:",
             color=discord.Color.blue()
         )
+
         embed.add_field(
             name="/qrbuild",
             value="Convert a text or link into a QR-coded object layout.",
@@ -26,6 +27,26 @@ class Help(commands.Cog):
         embed.add_field(
             name="/preview",
             value="Re-send the most recent QR preview image + zip (if available).",
+            inline=False
+        )
+        embed.add_field(
+            name="/pushgallery",
+            value="Push the most recent build into the public gallery page.",
+            inline=False
+        )
+        embed.add_field(
+            name="/setorigin",
+            value="Set the base world coordinates where QR layouts are placed.",
+            inline=False
+        )
+        embed.add_field(
+            name="/setchannel",
+            value="Assign a channel for bot functions like admin, gallery, or log.",
+            inline=False
+        )
+        embed.add_field(
+            name="/cleanup",
+            value="Delete the most recent preview image and zip build.",
             inline=False
         )
 
