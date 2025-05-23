@@ -15,6 +15,7 @@ class PushGallery(commands.Cog):
 
     @app_commands.command(name="pushgallery", description="Add the most recent QR build to the public gallery")
     async def pushgallery(self, interaction: discord.Interaction):
+        # Check user permissions
         if not is_admin_user(interaction):
             await interaction.response.send_message("❌ You do not have permission.", ephemeral=True)
             return
@@ -23,11 +24,12 @@ class PushGallery(commands.Cog):
         zip_path = CONFIG["zip_output_path"]
         object_path = CONFIG["object_output_path"]
 
+        # Check if required files exist
         if not os.path.exists(preview_path) or not os.path.exists(zip_path):
             await interaction.response.send_message("❌ No QR build found to push.", ephemeral=True)
             return
 
-        # Extract object metadata for gallery entry
+        # Extract metadata from build
         metadata = {
             "object_type": "Unknown",
             "qr_size": "N/A",
@@ -44,10 +46,10 @@ class PushGallery(commands.Cog):
         except Exception as e:
             print(f"[pushgallery] Failed to load object metadata: {e}")
 
-        # Save files + metadata to gallery
+        # Save preview + zip to gallery
         save_to_gallery(preview_path, zip_path, metadata)
 
-        # Post to configured gallery channel
+        # Determine channel to post gallery build
         channel_id = get_channel_id("gallery") or CONFIG["admin_channel_id"]
         channel = self.bot.get_channel(int(channel_id))
 
@@ -55,11 +57,12 @@ class PushGallery(commands.Cog):
             await interaction.response.send_message("✅ Build saved, but gallery channel was not found.", ephemeral=True)
             return
 
+        # Post preview + zip to gallery channel
         await channel.send(
             content=(
                 f"🧱 **QR Build Pushed to Gallery**\n"
                 f"• Object: `{metadata['object_type']}`\n"
-                f"• Size: {metadata['qr_size']}\n"
+                f"• Size: {metadata['qr_size']}`\n"
                 f"• Objects: {metadata['total_objects']}"
             ),
             files=[
