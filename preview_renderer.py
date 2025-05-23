@@ -1,14 +1,15 @@
 from PIL import Image, ImageDraw
 import os
 
-def render_qr_preview(matrix: list, output_path: str, scale: int = 20, border: int = 2):
+def render_qr_preview(matrix: list, output_path: str, scale: int = 64, border: int = 2, object_type: str = "SmallProtectorCase"):
     """
-    Renders a PNG preview of the QR object layout.
+    Renders a PNG preview of the QR object layout using thumbnails with grid overlay.
 
     - matrix: 2D list from generate_qr_matrix()
     - output_path: where to save the image
-    - scale: pixel size per QR unit (20px default)
+    - scale: pixel size per QR unit (default 64px for thumbnails)
     - border: empty border (in matrix units)
+    - object_type: used to select thumbnail image
     """
     rows = len(matrix)
     cols = len(matrix[0])
@@ -19,14 +20,26 @@ def render_qr_preview(matrix: list, output_path: str, scale: int = 20, border: i
     img = Image.new("RGB", (img_width, img_height), "white")
     draw = ImageDraw.Draw(img)
 
+    # Normalize object type to match filename
+    thumbnail_name = object_type.lower().replace(" ", "").replace("_", "") + ".png"
+    thumb_path = os.path.join("assets", "thumbnails", thumbnail_name)
+
+    # Attempt to load thumbnail or fallback
+    try:
+        thumb = Image.open(thumb_path).convert("RGBA").resize((scale, scale))
+    except Exception:
+        thumb = Image.new("RGBA", (scale, scale), "black")
+
+    # Draw objects and grid
     for r in range(rows):
         for c in range(cols):
-            if matrix[r][c]:  # black square
-                x0 = (c + border) * scale
-                y0 = (r + border) * scale
-                x1 = x0 + scale
-                y1 = y0 + scale
-                draw.rectangle([x0, y0, x1, y1], fill="black")
+            x = (c + border) * scale
+            y = (r + border) * scale
+            if matrix[r][c]:
+                img.paste(thumb, (x, y), mask=thumb if thumb.mode == "RGBA" else None)
+
+            # Draw grid box regardless
+            draw.rectangle([x, y, x + scale, y + scale], outline="#cccccc", width=1)
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     img.save(output_path)
