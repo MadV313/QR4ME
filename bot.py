@@ -82,6 +82,8 @@ async def qrbuild(interaction: discord.Interaction, text: str, scale: float = 1.
 # --- Extension Loader ---
 async def load_extensions():
     await bot.load_extension("commands.qrimage")
+    await bot.load_extension("commands.help")
+    await bot.load_extension("commands.preview")
 
 # --- Launch Bot ---
 if __name__ == "__main__":
