@@ -16,6 +16,19 @@
       margin-bottom: 2rem;
       color: #00ffd5;
     }
+    details {
+      background: #222;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+    }
+    summary {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #00ffd5;
+      cursor: pointer;
+      margin-bottom: 1rem;
+    }
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -66,32 +79,55 @@
 </head>
 <body>
   <h1>🧱 QR Build Gallery</h1>
-  <div class="grid" id="gallery"></div>
+  <div id="servers"></div>
 
   <script>
     fetch("/data/gallery.json")
       .then(res => res.json())
       .then(data => {
-        const gallery = document.getElementById("gallery");
-        data.reverse().forEach(entry => {
-          const card = document.createElement("div");
-          card.className = "card";
-
-          const fallbackThumb = `assets/thumbnails/${entry.object_type}.PNG`;
-
-          card.innerHTML = `
-            <img src="/${entry.image}" alt="QR Preview for ${entry.object_type}" 
-                 onerror="this.onerror=null;this.src='/${fallbackThumb}'">
-            <div class="info">
-              <h3>${entry.object_type}</h3>
-              <p>📏 ${entry.qr_size}</p>
-              <p>📦 ${entry.total_objects} objects</p>
-              <p>🕒 ${entry.created}</p>
-              <a href="/${entry.zip}" download>Download ZIP</a>
-            </div>
-          `;
-          gallery.appendChild(card);
+        const grouped = {};
+        data.forEach(entry => {
+          const sid = entry.server_id || "Unknown Server";
+          if (!grouped[sid]) grouped[sid] = [];
+          grouped[sid].push(entry);
         });
+
+        const container = document.getElementById("servers");
+
+        for (const [serverId, builds] of Object.entries(grouped)) {
+          const section = document.createElement("details");
+          section.open = true;
+
+          const summary = document.createElement("summary");
+          summary.textContent = `Server: ${serverId}`;
+          section.appendChild(summary);
+
+          const grid = document.createElement("div");
+          grid.className = "grid";
+
+          builds.reverse().forEach(entry => {
+            const card = document.createElement("div");
+            card.className = "card";
+
+            const fallbackThumb = `assets/thumbnails/${entry.object_type}.PNG`;
+
+            card.innerHTML = `
+              <img src="/${entry.image}" alt="QR Preview for ${entry.object_type}"
+                   onerror="this.onerror=null;this.src='/${fallbackThumb}'">
+              <div class="info">
+                <h3>${entry.object_type}</h3>
+                <p>📏 ${entry.qr_size}</p>
+                <p>📦 ${entry.total_objects} objects</p>
+                <p>🕒 ${entry.created}</p>
+                <a href="/${entry.zip}" download>Download ZIP</a>
+              </div>
+            `;
+            grid.appendChild(card);
+          });
+
+          section.appendChild(grid);
+          container.appendChild(section);
+        }
       });
   </script>
 </body>
