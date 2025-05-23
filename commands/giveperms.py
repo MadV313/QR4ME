@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-from utils.permissions import add_admin_user, is_admin_user
+from utils.permissions import add_admin_user, is_admin_user  # ✅ Updated to support per-guild
 
 class GivePerms(commands.Cog):
     def __init__(self, bot):
@@ -15,10 +15,10 @@ class GivePerms(commands.Cog):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
             return
 
-        add_admin_user(user.id)
+        add_admin_user(interaction.guild_id, user.id)  # ✅ now scoped to guild
 
         await interaction.response.send_message(
-            f"✅ `{user.name}` has been granted permission to use bot commands.",
+            f"✅ `{user.name}` has been granted permission to use bot commands in this server.",
             ephemeral=True
         )
 
