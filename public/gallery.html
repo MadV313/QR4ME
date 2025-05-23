@@ -77,10 +77,11 @@
           const card = document.createElement("div");
           card.className = "card";
 
-          const fallbackThumbnail = `assets/thumbnails/${entry.object_type}.PNG`;
+          const fallbackThumb = `assets/thumbnails/${entry.object_type}.PNG`;
 
           card.innerHTML = `
-            <img src="/${entry.image}" alt="QR Preview for ${entry.object_type}" onerror="this.onerror=null;this.src='/${fallbackThumbnail}';">
+            <img src="/${entry.image}" alt="QR Preview for ${entry.object_type}" 
+                 onerror="this.onerror=null;this.src='/${fallbackThumb}'">
             <div class="info">
               <h3>${entry.object_type}</h3>
               <p>📏 ${entry.qr_size}</p>
