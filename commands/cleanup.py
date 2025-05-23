@@ -3,8 +3,8 @@ from discord.ext import commands
 from discord import app_commands
 import os
 
-from config import CONFIG
-from utils.permissions import is_admin_user  # ✅ NEW
+from utils.permissions import is_admin_user  # ✅ Centralized permission check
+from utils.config_utils import get_guild_config  # ✅ NEW
 
 class Cleanup(commands.Cog):
     def __init__(self, bot):
@@ -16,9 +16,14 @@ class Cleanup(commands.Cog):
             await interaction.response.send_message("❌ You do not have permission.", ephemeral=True)
             return
 
+        # Load per-guild paths
+        guild_config = get_guild_config(interaction.guild_id)
+        preview_path = guild_config["preview_output_path"]
+        zip_path = guild_config["zip_output_path"]
+
         removed = []
 
-        for path in [CONFIG["preview_output_path"], CONFIG["zip_output_path"]]:
+        for path in [preview_path, zip_path]:
             try:
                 if os.path.exists(path):
                     os.remove(path)
