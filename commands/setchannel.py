@@ -1,18 +1,14 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+
 from config import CONFIG
 from utils.channel_utils import save_channel
+from utils.permissions import is_admin_user  # ✅ Centralized permission logic
 
 class SetChannel(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
-    def is_admin(self, interaction: discord.Interaction):
-        if not CONFIG["admin_roles"]:
-            return True
-        user_roles = [str(role.id) for role in interaction.user.roles]
-        return any(role in CONFIG["admin_roles"] for role in user_roles)
 
     @app_commands.command(name="setchannel", description="Assign a bot channel role like admin, gallery, or log")
     @app_commands.describe(
@@ -30,23 +26,25 @@ class SetChannel(commands.Cog):
         type: app_commands.Choice[str],
         target: discord.TextChannel
     ):
-        if not self.is_admin(interaction):
+        if not is_admin_user(interaction):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
             return
 
-        # Check if bot can send messages in that channel
+        # Ensure the bot can post in the selected channel
         permissions = target.permissions_for(interaction.guild.me)
         if not permissions.send_messages:
             await interaction.response.send_message(
-                f"❌ I don't have permission to send messages in {target.mention}.", ephemeral=True
+                f"❌ I don't have permission to send messages in {target.mention}.",
+                ephemeral=True
             )
             return
 
-        # Save to channels.json
+        # Save the channel assignment
         save_channel(type.value, str(target.id))
 
         await interaction.response.send_message(
-            f"✅ `{type.name}` successfully assigned to {target.mention}.", ephemeral=True
+            f"✅ `{type.name}` successfully assigned to {target.mention}.",
+            ephemeral=True
         )
 
 async def setup(bot):
