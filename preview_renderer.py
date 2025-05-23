@@ -1,7 +1,7 @@
 from PIL import Image, ImageDraw
 import os
 
-def render_qr_preview(matrix: list, output_path: str, scale: int = 64, border: int = 2, object_type: str = "SmallProtectorCase"):
+def render_qr_preview(matrix: list, output_path: str, scale: int = 64, border: int = 2, object_type: str = "SmallProtectiveCase"):
     """
     Renders a PNG preview of the QR object layout using thumbnails with grid overlay.
 
@@ -9,7 +9,7 @@ def render_qr_preview(matrix: list, output_path: str, scale: int = 64, border: i
     - output_path: where to save the image
     - scale: pixel size per QR unit (default 64px for thumbnails)
     - border: empty border (in matrix units)
-    - object_type: used to select thumbnail image
+    - object_type: used to select thumbnail image (expects .PNG exact case)
     """
     rows = len(matrix)
     cols = len(matrix[0])
@@ -20,17 +20,15 @@ def render_qr_preview(matrix: list, output_path: str, scale: int = 64, border: i
     img = Image.new("RGB", (img_width, img_height), "white")
     draw = ImageDraw.Draw(img)
 
-    # Normalize object type to match filename
-    thumbnail_name = object_type.lower().replace(" ", "").replace("_", "") + ".png"
+    # Match your actual file naming
+    thumbnail_name = object_type + ".PNG"
     thumb_path = os.path.join("assets", "thumbnails", thumbnail_name)
 
-    # Attempt to load thumbnail or fallback
     try:
         thumb = Image.open(thumb_path).convert("RGBA").resize((scale, scale))
     except Exception:
         thumb = Image.new("RGBA", (scale, scale), "black")
 
-    # Draw objects and grid
     for r in range(rows):
         for c in range(cols):
             x = (c + border) * scale
@@ -38,7 +36,7 @@ def render_qr_preview(matrix: list, output_path: str, scale: int = 64, border: i
             if matrix[r][c]:
                 img.paste(thumb, (x, y), mask=thumb if thumb.mode == "RGBA" else None)
 
-            # Draw grid box regardless
+            # Always draw grid
             draw.rectangle([x, y, x + scale, y + scale], outline="#cccccc", width=1)
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
