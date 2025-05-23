@@ -83,6 +83,7 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, scale: float
 
 
 def save_object_json(object_list: list, output_path: str):
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as f:
         json.dump({"Objects": object_list}, f, indent=2)
 
