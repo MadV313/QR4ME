@@ -24,12 +24,27 @@ class SetChannel(commands.Cog):
         app_commands.Choice(name="Gallery Channel", value="gallery"),
         app_commands.Choice(name="Log Channel", value="log")
     ])
-    async def setchannel(self, interaction: discord.Interaction, type: app_commands.Choice[str], target: discord.TextChannel):
+    async def setchannel(
+        self,
+        interaction: discord.Interaction,
+        type: app_commands.Choice[str],
+        target: discord.TextChannel
+    ):
         if not self.is_admin(interaction):
-            await interaction.response.send_message("❌ You do not have permission.", ephemeral=True)
+            await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
             return
 
+        # Check if bot can send messages in that channel
+        permissions = target.permissions_for(interaction.guild.me)
+        if not permissions.send_messages:
+            await interaction.response.send_message(
+                f"❌ I don't have permission to send messages in {target.mention}.", ephemeral=True
+            )
+            return
+
+        # Save to channels.json
         save_channel(type.value, str(target.id))
+
         await interaction.response.send_message(
             f"✅ `{type.name}` successfully assigned to {target.mention}.", ephemeral=True
         )
