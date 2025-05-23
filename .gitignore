@@ -1,9 +1,26 @@
+# Bytecode and cache
 __pycache__/
-*.zip
-.env
-outputs/
-previews/
 *.pyc
+
+# Environment and system files
+.env
 .DS_Store
+
+# IDE/Editor folders
 .vscode/
 .idea/
+
+# Output + Preview files (generated dynamically)
+outputs/
+previews/
+*.zip
+
+# Per-server saved data and temp states
+data/admin_users.json
+data/channels.json
+data/latest_objects.json
+data/output_build.json
+data/previews.json
+
+# Log or runtime files (optional)
+*.log
