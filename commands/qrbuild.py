@@ -39,6 +39,7 @@ class QRBuild(commands.Cog):
         object_type: app_commands.Choice[str],
         scale: float = 1.0
     ):
+        # Permission check
         if not is_admin_user(interaction):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
             return
@@ -49,16 +50,16 @@ class QRBuild(commands.Cog):
         # Step 1: Generate QR matrix
         matrix = generate_qr_matrix(text)
 
-        # Step 2: Convert to object list
+        # Step 2: Convert to DayZ object list
         objects = qr_to_object_list(matrix, obj_type, CONFIG["origin_position"], scale)
 
-        # Step 3: Save JSON
+        # Step 3: Save object placement JSON
         save_object_json(objects, CONFIG["object_output_path"])
 
         # Step 4: Render preview image
         render_qr_preview(matrix, CONFIG["preview_output_path"], object_type=obj_type)
 
-        # Step 5: Zip it all up
+        # Step 5: Create ZIP package
         create_qr_zip(
             CONFIG["object_output_path"],
             CONFIG["preview_output_path"],
@@ -66,7 +67,7 @@ class QRBuild(commands.Cog):
             extra_text=f"QR Size: {len(matrix)}x{len(matrix[0])}\nTotal Objects: {len(objects)}\nObject Used: {obj_type}"
         )
 
-        # Step 6: Send ZIP and preview to configured channel
+        # Step 6: Send to assigned gallery/admin channel
         channel_id = get_channel_id("gallery") or CONFIG["admin_channel_id"]
         channel = self.bot.get_channel(int(channel_id))
 
