@@ -11,6 +11,7 @@ OBJECT_CLASS_MAP = {
     "CookingPot": "CookingPot",
     "MetalWire": "MetalWire",
     "WoodenCrate": "WoodenCrate",
+    "BoxWooden": "StaticObj_Misc_BoxWooden",
     "Armband_Black": "Armband_Black"
 }
 
