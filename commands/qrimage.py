@@ -57,7 +57,7 @@ class QRImage(commands.Cog):
         matrix = generate_qr_matrix(qr_text)
         objects = qr_to_object_list(matrix, object_type, CONFIG["origin_position"], scale)
         save_object_json(objects, CONFIG["object_output_path"])
-        render_qr_preview(matrix, CONFIG["preview_output_path"])
+        render_qr_preview(matrix, CONFIG["preview_output_path"], object_type=object_type)
         create_qr_zip(
             CONFIG["object_output_path"],
             CONFIG["preview_output_path"],
