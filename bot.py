@@ -30,10 +30,14 @@ def is_admin(interaction: discord.Interaction):
 async def load_extensions():
     await bot.load_extension("commands.qrbuild")
     await bot.load_extension("commands.qrimage")
-    await bot.load_extension("commands.help")
     await bot.load_extension("commands.preview")
+    await bot.load_extension("commands.pushgallery")
     await bot.load_extension("commands.setorigin")
+    await bot.load_extension("commands.setchannel")
     await bot.load_extension("commands.cleanup")
+    await bot.load_extension("commands.giveperms")
+    await bot.load_extension("commands.revokeperms")
+    await bot.load_extension("commands.help")
 
 # --- Launch Bot ---
 if __name__ == "__main__":
