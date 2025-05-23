@@ -14,13 +14,5 @@
     "qr_size": "17x17",
     "total_objects": 120,
     "created": "20240522_1830"
-  },
-  {
-    "image": "gallery/MetalWire_20240520_1640.png",
-    "zip": "gallery/MetalWire_20240520_1640.zip",
-    "object_type": "MetalWire",
-    "qr_size": "25x25",
-    "total_objects": 215,
-    "created": "20240520_1640"
   }
 ]
