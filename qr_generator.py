@@ -1,7 +1,7 @@
 import qrcode
 import json
 
-# 🔧 In-game class mapping
+# ✅ In-game object class mapping
 OBJECT_CLASS_MAP = {
     "ImprovisedContainer": "Land_Container_1Mo",
     "SmallProtectiveCase": "SmallProtectorCase",
@@ -14,7 +14,7 @@ OBJECT_CLASS_MAP = {
     "Armband_Black": "Armband_Black"
 }
 
-# 🔧 Optional spacing tweaks for visual balance
+# ✅ Optional spacing tweaks per object
 OBJECT_SIZE_ADJUSTMENTS = {
     "SmallProtectiveCase": 1.0,
     "SmallProtectorCase": 1.0,
@@ -41,51 +41,56 @@ def generate_qr_matrix(data: str, box_size: int = 1) -> list:
 
 
 def qr_to_object_list(matrix: list, object_type: str, origin: dict, scale: float = 1.0) -> list:
-    objects = []
     rows = len(matrix)
     cols = len(matrix[0])
-
     spacing = scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
     resolved_type = OBJECT_CLASS_MAP.get(object_type, object_type)
 
     offset_x = origin["x"] - ((cols / 2) * spacing)
     offset_z = origin["z"] - ((rows / 2) * spacing)
 
+    objects = []
+
+    # ✅ Background camera object
+    background = {
+        "name": "DoorTestCamera",
+        "pos": [origin["x"], origin["y"] - 0.01, origin["z"]],
+        "ypr": [90.0, 0.0, 0.0],
+        "scale": 1.0,
+        "enableCEPersistency": 0,
+        "customString": ""
+    }
+    objects.append(background)
+
     for row in range(rows):
         for col in range(cols):
             if matrix[row][col]:
                 x = offset_x + (col * spacing)
                 z = offset_z + (row * spacing)
+
                 obj = {
-                    "type": resolved_type,
-                    "position": [x, origin["y"], z],
-                    "rotation": [0.0, 0.0, 0.0]
+                    "name": resolved_type,
+                    "pos": [x, origin["y"], z],
+                    "ypr": [0.0, 0.0, 0.0],
+                    "scale": 1.0,
+                    "enableCEPersistency": 0,
+                    "customString": ""
                 }
                 objects.append(obj)
-
-    # ✅ Add fixed background anchor object behind the entire grid
-    center_x = origin["x"]
-    center_z = origin["z"]
-    background = {
-        "type": "DoorTestCamera",
-        "position": [center_x, origin["y"] - 0.01, center_z],
-        "rotation": [0.0, 0.0, 0.0]
-    }
-    objects.append(background)
 
     return objects
 
 
 def save_object_json(object_list: list, output_path: str):
     with open(output_path, "w") as f:
-        json.dump(object_list, f, indent=2)
+        json.dump({"Objects": object_list}, f, indent=2)
 
 
-# 🔧 Optional manual test
+# ✅ Manual test (optional)
 if __name__ == "__main__":
     from config import CONFIG
     test_data = "https://discord.gg/your-server"
     matrix = generate_qr_matrix(test_data)
     object_list = qr_to_object_list(matrix, CONFIG["default_object"], CONFIG["origin_position"])
     save_object_json(object_list, CONFIG["object_output_path"])
-    print(f"Generated {len(object_list)} objects (including anchor).")
+    print(f"Generated {len(object_list)} objects including anchor.")
