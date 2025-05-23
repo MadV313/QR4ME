@@ -3,3 +3,7 @@ __pycache__/
 .env
 outputs/
 previews/
+*.pyc
+.DS_Store
+.vscode/
+.idea/
