@@ -1,121 +1,88 @@
-Traceback (most recent call last):
+import discord
+from discord.ext import commands
+from discord import app_commands
 
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+from config import CONFIG
+from qr_generator import generate_qr_matrix, qr_to_object_list, save_object_json
+from preview_renderer import render_qr_preview
+from zip_packager import create_qr_zip
 
-  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+class QRBuild(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
 
-    @app_commands.command(name="qrbuild", description="Convert text into a DayZ object QR layout")
-
-     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-           ^^^^^^^^
-
-  File "/usr/local/lib/python3.12/site-packages/discord/app_commands/commands.py", line 687, in __init__
-
-                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-TypeError: invalid default parameter type given (<class 'discord.app_commands.models.Choice'>), expected (<class 'str'>, <class 'NoneType'>)
-
- 
-
-The above exception was the direct cause of the following exception:
-
- 
-
-    asyncio.run(load_extensions())
-
-  File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
-
-           ^^^^^^^^^^^^^^^^
-
-  File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
-
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-  File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
-
-  File "/app/bot.py", line 31, in load_extensions
-
-    await bot.load_extension("commands.qrbuild")
-
-  File "/usr/local/lib/python3.12/site-packages/discord/ext/commands/bot.py", line 1029, in load_extension
-
-    await self._load_from_module_spec(spec, name)
-
-    raise errors.ExtensionFailed(key, e) from e
-
-discord.ext.commands.errors.ExtensionFailed: Extension 'commands.qrbuild' raised an error: TypeError: invalid default parameter type given (<class 'discord.app_commands.models.Choice'>), expected (<class 'str'>, <class 'NoneType'>)
-
-Traceback (most recent call last):
-
-  File "/usr/local/lib/python3.12/site-packages/discord/ext/commands/bot.py", line 951, in _load_from_module_spec
-
-    spec.loader.exec_module(lib)  # type: ignore
-
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
-
-  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-
-  File "/app/commands/qrbuild.py", line 10, in <module>
-
-    class QRBuild(commands.Cog):
-
-  File "/app/commands/qrbuild.py", line 20, in QRBuild
+    def is_admin(self, interaction: discord.Interaction):
+        if not CONFIG["admin_roles"]:
+            return True
+        user_roles = [str(role.id) for role in interaction.user.roles]
+        return any(role in CONFIG["admin_roles"] for role in user_roles)
 
     @app_commands.command(name="qrbuild", description="Convert text into a DayZ object QR layout")
+    @app_commands.describe(
+        text="The text or URL to encode as a QR code",
+        scale="Spacing between objects (default 1.0)",
+        object_type="Choose the object to use for QR layout"
+    )
+    @app_commands.choices(
+        object_type=[
+            app_commands.Choice(name="Small Protective Case", value="SmallProtectiveCase"),
+            app_commands.Choice(name="Wooden Crate", value="WoodenCrate"),
+            app_commands.Choice(name="Improvised Container", value="ImprovisedContainer"),
+            app_commands.Choice(name="Dry Bag (Black)", value="DryBag_Black"),
+            app_commands.Choice(name="Plastic Bottle", value="PlasticBottle"),
+            app_commands.Choice(name="Cooking Pot", value="CookingPot"),
+            app_commands.Choice(name="Metal Wire", value="MetalWire"),
+        ]
+    )
+    async def qrbuild(
+        self,
+        interaction: discord.Interaction,
+        text: str,
+        object_type: str = "SmallProtectiveCase",
+        scale: float = 1.0
+    ):
+        if not self.is_admin(interaction):
+            await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
+            return
 
-     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        await interaction.response.defer()
 
-  File "/usr/local/lib/python3.12/site-packages/discord/app_commands/commands.py", line 2060, in decorator
+        # Step 1: Generate QR matrix
+        matrix = generate_qr_matrix(text)
 
-    return Command(
+        # Step 2: Convert to object list
+        objects = qr_to_object_list(matrix, object_type, CONFIG["origin_position"], scale)
 
-           ^^^^^^^^
+        # Step 3: Save JSON
+        save_object_json(objects, CONFIG["object_output_path"])
 
-  File "/usr/local/lib/python3.12/site-packages/discord/app_commands/commands.py", line 687, in __init__
+        # Step 4: Render preview image
+        render_qr_preview(matrix, CONFIG["preview_output_path"], object_type=object_type)
 
-    self._params: Dict[str, CommandParameter] = _extract_parameters_from_callback(callback, callback.__globals__)
+        # Step 5: Zip it all up
+        create_qr_zip(
+            CONFIG["object_output_path"],
+            CONFIG["preview_output_path"],
+            CONFIG["zip_output_path"],
+            extra_text=f"QR Size: {len(matrix)}x{len(matrix[0])}\nTotal Objects: {len(objects)}\nObject Used: {object_type}"
+        )
 
-                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        # Step 6: Send ZIP and preview to admin channel
+        channel = self.bot.get_channel(int(CONFIG["admin_channel_id"]))
+        if not channel:
+            await interaction.followup.send("❌ Could not find admin channel.")
+            return
 
-  File "/usr/local/lib/python3.12/site-packages/discord/app_commands/commands.py", line 383, in _extract_parameters_from_callback
+        await channel.send(
+            content=f"🧱 **QR Build Complete**\n• Size: {len(matrix)}x{len(matrix[0])}\n• Objects: {len(objects)}\n• Type: `{object_type}`",
+            files=[
+                discord.File(CONFIG["zip_output_path"]),
+                discord.File(CONFIG["preview_output_path"])
+            ]
+        )
 
-    param = annotation_to_parameter(resolved, parameter)
+        await interaction.followup.send("✅ QR build generated and posted in admin channel.")
 
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-  File "/usr/local/lib/python3.12/site-packages/discord/app_commands/transformers.py", line 847, in annotation_to_parameter
-
-    raise TypeError(f'invalid default parameter type given ({default.__class__}), expected {valid_types}')
-
-TypeError: invalid default parameter type given (<class 'discord.app_commands.models.Choice'>), expected (<class 'str'>, <class 'NoneType'>)
-
- 
-
-The above exception was the direct cause of the following exception:
-
- 
-
-Traceback (most recent call last):
-
-  File "/app/bot.py", line 40, in <module>
-
-    asyncio.run(load_extensions())
-
-  File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
-
-    return runner.run(main)
-
-           ^^^^^^^^^^^^^^^^
-
-  File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
-
-    return self._loop.run_until_complete(task)
-
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-  File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+# ✅ Proper setup function
+async def setup(bot):
+    await bot.add_cog(QRBuild(bot))
