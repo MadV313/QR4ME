@@ -57,7 +57,7 @@ async def on_ready():
     except Exception as e:
         print(f"❌ Sync failed: {e}")
 
-# --- Legacy Admin Role Check (fallback) ---
+# --- Legacy Admin Role Check (fallback for core config use) ---
 def is_admin(interaction: discord.Interaction):
     if not CONFIG["admin_roles"]:
         return True
