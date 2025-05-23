@@ -34,6 +34,7 @@
     .card img {
       width: 100%;
       display: block;
+      height: auto;
     }
     .card .info {
       padding: 1rem;
@@ -73,10 +74,13 @@
       .then(data => {
         const gallery = document.getElementById("gallery");
         data.reverse().forEach(entry => {
-          const div = document.createElement("div");
-          div.className = "card";
-          div.innerHTML = `
-            <img src="/${entry.image}" alt="QR Preview">
+          const card = document.createElement("div");
+          card.className = "card";
+
+          const fallbackThumbnail = `assets/thumbnails/${entry.object_type}.PNG`;
+
+          card.innerHTML = `
+            <img src="/${entry.image}" alt="QR Preview for ${entry.object_type}" onerror="this.onerror=null;this.src='/${fallbackThumbnail}';">
             <div class="info">
               <h3>${entry.object_type}</h3>
               <p>📏 ${entry.qr_size}</p>
@@ -85,7 +89,7 @@
               <a href="/${entry.zip}" download>Download ZIP</a>
             </div>
           `;
-          gallery.appendChild(div);
+          gallery.appendChild(card);
         });
       });
   </script>
