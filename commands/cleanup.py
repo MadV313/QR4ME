@@ -4,7 +4,7 @@ from discord import app_commands
 import os
 
 from utils.permissions import is_admin_user  # ✅ Centralized permission check
-from utils.config_utils import get_guild_config  # ✅ NEW
+from utils.config_utils import get_guild_config  # ✅ Multi-server support
 
 class Cleanup(commands.Cog):
     def __init__(self, bot):
@@ -16,10 +16,11 @@ class Cleanup(commands.Cog):
             await interaction.response.send_message("❌ You do not have permission.", ephemeral=True)
             return
 
-        # Load per-guild paths
-        guild_config = get_guild_config(interaction.guild_id)
-        preview_path = guild_config["preview_output_path"]
-        zip_path = guild_config["zip_output_path"]
+        # Load per-guild output paths
+        guild_id = str(interaction.guild_id)
+        guild_config = get_guild_config(guild_id)
+        preview_path = guild_config.get("preview_output_path")
+        zip_path = guild_config.get("zip_output_path")
 
         removed = []
 
@@ -29,12 +30,16 @@ class Cleanup(commands.Cog):
                     os.remove(path)
                     removed.append(os.path.basename(path))
             except Exception as e:
-                await interaction.response.send_message(f"❌ Failed to delete `{path}`: {e}", ephemeral=True)
+                await interaction.response.send_message(
+                    f"❌ Failed to delete `{os.path.basename(path)}`: {e}",
+                    ephemeral=True
+                )
                 return
 
         if removed:
             await interaction.response.send_message(
-                f"🧹 Removed: `{', '.join(removed)}`", ephemeral=True
+                f"🧹 Removed: `{', '.join(removed)}`",
+                ephemeral=True
             )
         else:
             await interaction.response.send_message("✅ Nothing to clean.", ephemeral=True)
