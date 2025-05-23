@@ -10,6 +10,7 @@ from config import CONFIG
 from qr_generator import generate_qr_matrix, qr_to_object_list, save_object_json
 from preview_renderer import render_qr_preview
 from zip_packager import create_qr_zip
+from utils.channel_utils import get_channel_id  # ✅ NEW
 
 class QRImage(commands.Cog):
     def __init__(self, bot):
@@ -42,7 +43,7 @@ class QRImage(commands.Cog):
         self,
         interaction: discord.Interaction,
         image: discord.Attachment,
-        object_type: str = "SmallProtectiveCase",
+        object_type: app_commands.Choice[str],
         scale: float = 1.0
     ):
         if not self.is_admin(interaction):
@@ -50,22 +51,22 @@ class QRImage(commands.Cog):
             return
 
         await interaction.response.defer()
+        obj_type = object_type.value
 
-        # Download image
+        # Step 1: Download image
         img_bytes = await image.read()
         np_array = np.frombuffer(img_bytes, np.uint8)
         img = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
 
-        # Decode QR code
+        # Step 2: Decode QR
         decoded = decode(img)
         if not decoded:
             await interaction.followup.send("❌ Failed to decode QR code from the image.", ephemeral=True)
             return
 
         qr_text = decoded[0].data.decode("utf-8")
-        obj_type = object_type  # It's already a string now
 
-        # Generate QR + output files
+        # Step 3: Generate build
         matrix = generate_qr_matrix(qr_text)
         objects = qr_to_object_list(matrix, obj_type, CONFIG["origin_position"], scale)
         save_object_json(objects, CONFIG["object_output_path"])
@@ -77,10 +78,12 @@ class QRImage(commands.Cog):
             extra_text=f"(from image)\nQR Size: {len(matrix)}x{len(matrix[0])}\nTotal Objects: {len(objects)}\nObject Used: {obj_type}"
         )
 
-        # Post to admin channel
-        channel = self.bot.get_channel(int(CONFIG["admin_channel_id"]))
+        # Step 4: Post to configured gallery/admin channel
+        channel_id = get_channel_id("gallery") or CONFIG["admin_channel_id"]
+        channel = self.bot.get_channel(int(channel_id))
+
         if not channel:
-            await interaction.followup.send("❌ Admin channel not found.")
+            await interaction.followup.send("✅ Build created, but gallery channel was not found.", ephemeral=True)
             return
 
         await channel.send(
@@ -91,7 +94,7 @@ class QRImage(commands.Cog):
             ]
         )
 
-        await interaction.followup.send("✅ QR image decoded and build posted in admin channel.")
+        await interaction.followup.send("✅ QR image decoded and build posted in gallery channel.", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(QRImage(bot))
