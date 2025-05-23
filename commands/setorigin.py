@@ -2,17 +2,13 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import json
+
 from config import CONFIG
+from utils.permissions import is_admin_user  # ✅ Centralized admin check
 
 class SetOrigin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
-    def is_admin(self, interaction: discord.Interaction):
-        if not CONFIG["admin_roles"]:
-            return True
-        user_roles = [str(role.id) for role in interaction.user.roles]
-        return any(role in CONFIG["admin_roles"] for role in user_roles)
 
     @app_commands.command(name="setorigin", description="Update the origin position for QR placement")
     @app_commands.describe(
@@ -21,7 +17,7 @@ class SetOrigin(commands.Cog):
         z="Z coordinate"
     )
     async def setorigin(self, interaction: discord.Interaction, x: float, z: float, y: float = 0.0):
-        if not self.is_admin(interaction):
+        if not is_admin_user(interaction):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
             return
 
