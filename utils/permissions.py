@@ -11,18 +11,20 @@ def _save_config(data):
         json.dump(data, f, indent=2)
 
 def is_admin_user(interaction) -> bool:
-    """Returns True if user is in admin_roles or permitted_users."""
+    """
+    Returns True if the user is in either:
+    - permitted_users list (set via /giveperms)
+    - admin_roles (checked from interaction.user.roles)
+    """
     try:
         data = _load_config()
         user_id_str = str(interaction.user.id)
         permitted_users = data.get("permitted_users", [])
         admin_roles = data.get("admin_roles", [])
 
-        # Check if user ID is directly permitted
         if user_id_str in permitted_users:
             return True
 
-        # Check if user has any admin role
         if hasattr(interaction.user, "roles"):
             user_roles = [str(role.id) for role in interaction.user.roles]
             return any(role_id in admin_roles for role_id in user_roles)
@@ -32,8 +34,8 @@ def is_admin_user(interaction) -> bool:
         return False
 
 def add_admin_user(user_id: int):
-    data = _load_config()
     user_id_str = str(user_id)
+    data = _load_config()
 
     if "permitted_users" not in data:
         data["permitted_users"] = []
@@ -43,8 +45,8 @@ def add_admin_user(user_id: int):
         _save_config(data)
 
 def remove_admin_user(user_id: int) -> bool:
-    data = _load_config()
     user_id_str = str(user_id)
+    data = _load_config()
 
     if "permitted_users" not in data or user_id_str not in data["permitted_users"]:
         return False
