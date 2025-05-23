@@ -1,0 +1,30 @@
+import discord
+from discord.ext import commands
+from discord import app_commands
+import json
+
+class ViewOrigin(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @app_commands.command(name="vieworigin", description="Check the current origin position used for QR placement")
+    async def vieworigin(self, interaction: discord.Interaction):
+        try:
+            with open("config.json", "r") as f:
+                data = json.load(f)
+                origin = data.get("origin_position", {})
+
+            x = origin.get("x", "N/A")
+            y = origin.get("y", "N/A")
+            z = origin.get("z", "N/A")
+
+            await interaction.response.send_message(
+                f"📍 **Current Origin Position:**\n"
+                f"> `X`: {x}\n> `Y`: {y}\n> `Z`: {z}",
+                ephemeral=True
+            )
+        except Exception as e:
+            await interaction.response.send_message(f"❌ Failed to load origin: {e}", ephemeral=True)
+
+async def setup(bot):
+    await bot.add_cog(ViewOrigin(bot))
