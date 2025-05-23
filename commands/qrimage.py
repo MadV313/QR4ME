@@ -25,14 +25,25 @@ class QRImage(commands.Cog):
     @app_commands.describe(
         image="Upload a PNG or JPG of a QR code",
         scale="Spacing between objects (default 1.0)",
-        object_type="DayZ object to use (default: SmallProtectorCase)"
+        object_type="Choose the object to use for QR layout"
+    )
+    @app_commands.choices(
+        object_type=[
+            app_commands.Choice(name="Small Protective Case", value="SmallProtectiveCase"),
+            app_commands.Choice(name="Wooden Crate", value="WoodenCrate"),
+            app_commands.Choice(name="Improvised Container", value="ImprovisedContainer"),
+            app_commands.Choice(name="Dry Bag (Black)", value="DryBag_Black"),
+            app_commands.Choice(name="Plastic Bottle", value="PlasticBottle"),
+            app_commands.Choice(name="Cooking Pot", value="CookingPot"),
+            app_commands.Choice(name="Metal Wire", value="MetalWire"),
+        ]
     )
     async def qrimage(
         self,
         interaction: discord.Interaction,
         image: discord.Attachment,
         scale: float = 1.0,
-        object_type: str = "SmallProtectorCase"
+        object_type: app_commands.Choice[str]
     ):
         if not self.is_admin(interaction):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
@@ -52,17 +63,18 @@ class QRImage(commands.Cog):
             return
 
         qr_text = decoded[0].data.decode("utf-8")
+        obj_type = object_type.value
 
         # Generate QR + output files
         matrix = generate_qr_matrix(qr_text)
-        objects = qr_to_object_list(matrix, object_type, CONFIG["origin_position"], scale)
+        objects = qr_to_object_list(matrix, obj_type, CONFIG["origin_position"], scale)
         save_object_json(objects, CONFIG["object_output_path"])
-        render_qr_preview(matrix, CONFIG["preview_output_path"], object_type=object_type)
+        render_qr_preview(matrix, CONFIG["preview_output_path"], object_type=obj_type)
         create_qr_zip(
             CONFIG["object_output_path"],
             CONFIG["preview_output_path"],
             CONFIG["zip_output_path"],
-            extra_text=f"(from image)\nQR Size: {len(matrix)}x{len(matrix[0])}\nTotal Objects: {len(objects)}\nObject Used: {object_type}"
+            extra_text=f"(from image)\nQR Size: {len(matrix)}x{len(matrix[0])}\nTotal Objects: {len(objects)}\nObject Used: {obj_type}"
         )
 
         # Post to admin channel
@@ -72,7 +84,7 @@ class QRImage(commands.Cog):
             return
 
         await channel.send(
-            content=f"📷 **QR Image Build Complete**\n• Decoded: `{qr_text}`\n• Size: {len(matrix)}x{len(matrix[0])}\n• Objects: {len(objects)}\n• Type: `{object_type}`",
+            content=f"📷 **QR Image Build Complete**\n• Decoded: `{qr_text}`\n• Size: {len(matrix)}x{len(matrix[0])}\n• Objects: {len(objects)}\n• Type: `{obj_type}`",
             files=[
                 discord.File(CONFIG["zip_output_path"]),
                 discord.File(CONFIG["preview_output_path"])
