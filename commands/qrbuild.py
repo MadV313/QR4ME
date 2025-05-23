@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+import os
 
 from config import CONFIG
 from qr_generator import generate_qr_matrix, qr_to_object_list, save_object_json
