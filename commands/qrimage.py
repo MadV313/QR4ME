@@ -32,6 +32,7 @@ class QRImage(commands.Cog):
             app_commands.Choice(name="Plastic Bottle", value="PlasticBottle"),
             app_commands.Choice(name="Cooking Pot", value="CookingPot"),
             app_commands.Choice(name="Metal Wire", value="MetalWire"),
+            app_commands.Choice(name="Armband (Black)", value="Armband_Black")
         ]
     )
     async def qrimage(
