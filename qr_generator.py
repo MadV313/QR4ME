@@ -1,46 +1,52 @@
 import qrcode
 import json
 
+# 🔧 In-game class overrides
+OBJECT_CLASS_MAP = {
+    "ImprovisedContainer": "Land_Container_1Mo",
+    "SmallProtectiveCase": "SmallProtectorCase",  # fallback fix
+    "SmallProtectorCase": "SmallProtectorCase",
+    "DryBag_Black": "DryBag_Black",
+    "PlasticBottle": "PlasticBottle",
+    "CookingPot": "CookingPot",
+    "MetalWire": "MetalWire",
+    "WoodenCrate": "WoodenCrate",
+    "Armband_Black": "Armband_Black"
+}
+
 # Optional per-object spacing scale adjustment
 OBJECT_SIZE_ADJUSTMENTS = {
     "SmallProtectiveCase": 1.0,
-    "SmallProtectorCase": 1.0,  # backup in case of typo
+    "SmallProtectorCase": 1.0,
     "DryBag_Black": 1.25,
     "PlasticBottle": 0.75,
     "CookingPot": 0.8,
     "MetalWire": 0.6,
     "ImprovisedContainer": 1.0,
-    "WoodenCrate": 1.1
+    "WoodenCrate": 1.1,
+    "Armband_Black": 0.5
 }
 
+
 def generate_qr_matrix(data: str, box_size: int = 1) -> list:
-    """
-    Converts input text to a binary matrix (1 = black, 0 = white).
-    """
     qr = qrcode.QRCode(
-        version=None,  # auto size
+        version=None,
         error_correction=qrcode.constants.ERROR_CORRECT_M,
         box_size=box_size,
         border=1
     )
     qr.add_data(data)
     qr.make(fit=True)
-    matrix = qr.get_matrix()
-    return matrix  # 2D list of booleans
+    return qr.get_matrix()  # 2D list of booleans
 
 
 def qr_to_object_list(matrix: list, object_type: str, origin: dict, scale: float = 1.0) -> list:
-    """
-    Converts QR matrix into a list of DayZ objects at mapped coordinates.
-    Only '1' (black) pixels result in objects.
-    Includes scaling logic for in-game size differences.
-    """
     objects = []
     rows = len(matrix)
     cols = len(matrix[0])
 
-    # Adjust spacing if object type has a known real-world size difference
     spacing = scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
+    resolved_type = OBJECT_CLASS_MAP.get(object_type, object_type)
 
     offset_x = origin["x"] - ((cols / 2) * spacing)
     offset_z = origin["z"] - ((rows / 2) * spacing)
@@ -51,7 +57,7 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, scale: float
                 x = offset_x + (col * spacing)
                 z = offset_z + (row * spacing)
                 obj = {
-                    "type": object_type,
+                    "type": resolved_type,
                     "position": [x, origin["y"], z],
                     "rotation": [0.0, 0.0, 0.0]
                 }
@@ -65,7 +71,7 @@ def save_object_json(object_list: list, output_path: str):
         json.dump(object_list, f, indent=2)
 
 
-# 🔧 Optional direct test
+# 🔧 Optional test
 if __name__ == "__main__":
     from config import CONFIG
     test_data = "https://discord.gg/your-server"
