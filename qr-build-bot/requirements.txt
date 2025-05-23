@@ -1,6 +1,0 @@
-discord.py
-qrcode
-Pillow
-python-dotenv
-opencv-python-headless
-pyzbar
