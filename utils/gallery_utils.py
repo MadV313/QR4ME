@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 
 GALLERY_DIR = "public/gallery"
-GALLERY_JSON = "public/data/gallery.json"
+GALLERY_JSON = "data/gallery.json"
 
 def save_to_gallery(preview_path, zip_path, metadata: dict):
     os.makedirs(GALLERY_DIR, exist_ok=True)
