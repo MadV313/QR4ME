@@ -38,8 +38,8 @@ class QRBuild(commands.Cog):
         self,
         interaction: discord.Interaction,
         text: str,
-        scale: float = 1.0,
-        object_type: app_commands.Choice[str]
+        object_type: app_commands.Choice[str] = app_commands.Choice(name="Small Protective Case", value="SmallProtectiveCase"),
+        scale: float = 1.0
     ):
         if not self.is_admin(interaction):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
