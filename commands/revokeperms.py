@@ -15,16 +15,17 @@ class RevokePerms(commands.Cog):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
             return
 
-        removed = remove_admin_user(user.id)
+        guild_id = str(interaction.guild.id)
+        removed = remove_admin_user(guild_id, user.id)
 
         if removed:
             await interaction.response.send_message(
-                f"🛑 `{user.name}` has been revoked from using bot commands.",
+                f"🛑 `{user.name}` has been revoked from using bot commands in this server.",
                 ephemeral=True
             )
         else:
             await interaction.response.send_message(
-                f"ℹ️ `{user.name}` was not listed as a permitted user.",
+                f"ℹ️ `{user.name}` was not listed as a permitted user in this server.",
                 ephemeral=True
             )
 
