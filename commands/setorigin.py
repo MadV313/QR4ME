@@ -2,9 +2,23 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import json
+import os
 
-from config import CONFIG
 from utils.permissions import is_admin_user  # ✅ Centralized admin check
+
+ORIGINS_FILE = "data/origins.json"
+
+def load_origins():
+    if not os.path.exists(ORIGINS_FILE):
+        return {}
+    with open(ORIGINS_FILE, "r") as f:
+        return json.load(f)
+
+def save_origin(guild_id: str, x: float, y: float, z: float):
+    data = load_origins()
+    data[guild_id] = {"x": x, "y": y, "z": z}
+    with open(ORIGINS_FILE, "w") as f:
+        json.dump(data, f, indent=2)
 
 class SetOrigin(commands.Cog):
     def __init__(self, bot):
@@ -21,21 +35,12 @@ class SetOrigin(commands.Cog):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
             return
 
+        guild_id = str(interaction.guild.id)
+
         try:
-            with open("config.json", "r") as f:
-                data = json.load(f)
-
-            data["origin_position"] = {
-                "x": x,
-                "y": y,
-                "z": z
-            }
-
-            with open("config.json", "w") as f:
-                json.dump(data, f, indent=2)
-
+            save_origin(guild_id, x, y, z)
             await interaction.response.send_message(
-                f"📍 **New origin position set:**\n"
+                f"📍 **New origin position set for this server:**\n"
                 f"> `X`: {x}\n> `Y`: {y}\n> `Z`: {z}",
                 ephemeral=True
             )
