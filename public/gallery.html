@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QR Build Gallery</title>
+  <style>
+    body {
+      background: #1a1a1a;
+      font-family: Arial, sans-serif;
+      color: #f0f0f0;
+      margin: 0;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #00ffd5;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: #2b2b2b;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+      transition: transform 0.2s ease;
+    }
+    .card:hover {
+      transform: scale(1.03);
+    }
+    .card img {
+      width: 100%;
+      display: block;
+    }
+    .card .info {
+      padding: 1rem;
+    }
+    .card .info h3 {
+      margin: 0 0 0.5rem;
+      color: #00ffe0;
+    }
+    .card .info p {
+      margin: 0.2rem 0;
+      font-size: 0.9rem;
+    }
+    .card .info a {
+      display: inline-block;
+      margin-top: 0.8rem;
+      text-decoration: none;
+      color: #00ffd5;
+      background: #111;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-weight: bold;
+      transition: background 0.2s ease;
+    }
+    .card .info a:hover {
+      background: #00ffd5;
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧱 QR Build Gallery</h1>
+  <div class="grid" id="gallery"></div>
+
+  <script>
+    fetch("/data/gallery.json")
+      .then(res => res.json())
+      .then(data => {
+        const gallery = document.getElementById("gallery");
+        data.reverse().forEach(entry => {
+          const div = document.createElement("div");
+          div.className = "card";
+          div.innerHTML = `
+            <img src="/${entry.image}" alt="QR Preview">
+            <div class="info">
+              <h3>${entry.object_type}</h3>
+              <p>📏 ${entry.qr_size}</p>
+              <p>📦 ${entry.total_objects} objects</p>
+              <p>🕒 ${entry.created}</p>
+              <a href="/${entry.zip}" download>Download ZIP</a>
+            </div>
+          `;
+          gallery.appendChild(div);
+        });
+      });
+  </script>
+</body>
+</html>
