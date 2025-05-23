@@ -46,4 +46,4 @@ class Preview(commands.Cog):
         await interaction.response.send_message("✅ Reposted in gallery channel.", ephemeral=True)
 
 async def setup(bot):
-    aw
+    await bot.add_cog(Preview(bot))
