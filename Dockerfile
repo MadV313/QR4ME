@@ -14,11 +14,15 @@ RUN apt-get update && apt-get install -y \
 # Set working directory inside the container
 WORKDIR /app
 
-# Copy all project files
+# Copy project files
 COPY . .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Set default command to run your bot
+# Create runtime directories in case they're gitignored
+RUN mkdir -p outputs previews data public/gallery
+
+# Default command to run the bot
 CMD ["python", "bot.py"]
