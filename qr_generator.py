@@ -1,10 +1,10 @@
 import qrcode
 import json
 
-# 🔧 In-game class overrides
+# 🔧 In-game class mapping
 OBJECT_CLASS_MAP = {
     "ImprovisedContainer": "Land_Container_1Mo",
-    "SmallProtectiveCase": "SmallProtectorCase",  # fallback fix
+    "SmallProtectiveCase": "SmallProtectorCase",
     "SmallProtectorCase": "SmallProtectorCase",
     "DryBag_Black": "DryBag_Black",
     "PlasticBottle": "PlasticBottle",
@@ -14,7 +14,7 @@ OBJECT_CLASS_MAP = {
     "Armband_Black": "Armband_Black"
 }
 
-# Optional per-object spacing scale adjustment
+# 🔧 Optional spacing tweaks for visual balance
 OBJECT_SIZE_ADJUSTMENTS = {
     "SmallProtectiveCase": 1.0,
     "SmallProtectorCase": 1.0,
@@ -37,7 +37,7 @@ def generate_qr_matrix(data: str, box_size: int = 1) -> list:
     )
     qr.add_data(data)
     qr.make(fit=True)
-    return qr.get_matrix()  # 2D list of booleans
+    return qr.get_matrix()
 
 
 def qr_to_object_list(matrix: list, object_type: str, origin: dict, scale: float = 1.0) -> list:
@@ -63,6 +63,16 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, scale: float
                 }
                 objects.append(obj)
 
+    # ✅ Add fixed background anchor object behind the entire grid
+    center_x = origin["x"]
+    center_z = origin["z"]
+    background = {
+        "type": "DoorTestCamera",
+        "position": [center_x, origin["y"] - 0.01, center_z],
+        "rotation": [0.0, 0.0, 0.0]
+    }
+    objects.append(background)
+
     return objects
 
 
@@ -71,11 +81,11 @@ def save_object_json(object_list: list, output_path: str):
         json.dump(object_list, f, indent=2)
 
 
-# 🔧 Optional test
+# 🔧 Optional manual test
 if __name__ == "__main__":
     from config import CONFIG
     test_data = "https://discord.gg/your-server"
     matrix = generate_qr_matrix(test_data)
     object_list = qr_to_object_list(matrix, CONFIG["default_object"], CONFIG["origin_position"])
     save_object_json(object_list, CONFIG["object_output_path"])
-    print(f"Generated {len(object_list)} objects.")
+    print(f"Generated {len(object_list)} objects (including anchor).")
