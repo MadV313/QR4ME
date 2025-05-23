@@ -87,19 +87,19 @@
       .then(data => {
         const grouped = {};
         data.forEach(entry => {
-          const sid = entry.server_id || "Unknown Server";
-          if (!grouped[sid]) grouped[sid] = [];
-          grouped[sid].push(entry);
+          const server = entry.server_id || "Unknown Server";
+          if (!grouped[server]) grouped[server] = [];
+          grouped[server].push(entry);
         });
 
         const container = document.getElementById("servers");
 
-        for (const [serverId, builds] of Object.entries(grouped)) {
+        Object.entries(grouped).forEach(([serverId, builds]) => {
           const section = document.createElement("details");
           section.open = true;
 
           const summary = document.createElement("summary");
-          summary.textContent = `Server: ${serverId}`;
+          summary.textContent = `📡 Server: ${serverId}`;
           section.appendChild(summary);
 
           const grid = document.createElement("div");
@@ -109,11 +109,10 @@
             const card = document.createElement("div");
             card.className = "card";
 
-            const fallbackThumb = `assets/thumbnails/${entry.object_type}.PNG`;
+            const fallback = `assets/thumbnails/${entry.object_type}.PNG`;
 
             card.innerHTML = `
-              <img src="/${entry.image}" alt="QR Preview for ${entry.object_type}"
-                   onerror="this.onerror=null;this.src='/${fallbackThumb}'">
+              <img src="/${entry.image}" alt="QR Preview" onerror="this.onerror=null;this.src='/${fallback}'">
               <div class="info">
                 <h3>${entry.object_type}</h3>
                 <p>📏 ${entry.qr_size}</p>
@@ -127,7 +126,7 @@
 
           section.appendChild(grid);
           container.appendChild(section);
-        }
+        });
       });
   </script>
 </body>
