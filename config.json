@@ -1,13 +1,21 @@
 {
   "discord_token": "YOUR_DISCORD_BOT_TOKEN_HERE",
   "admin_channel_id": "YOUR_ADMIN_CHANNEL_ID_HERE",
-  "default_object": "SmallProtectorCase",
+
+  "default_object": "SmallProtectiveCase",
   "origin_position": {
     "x": 5000.0,
     "y": 0.0,
     "z": 5000.0
   },
+
   "preview_output_path": "previews/qr_preview.png",
   "object_output_path": "data/objects.json",
-  "zip_output_path": "outputs/qr_code.zip"
+  "zip_output_path": "outputs/qr_code.zip",
+
+  "gallery_url": "https://yourdomain.com/public/gallery.html",
+  "admin_roles": [
+    "YOUR_ADMIN_ROLE_ID_1",
+    "YOUR_ADMIN_ROLE_ID_2"
+  ]
 }
