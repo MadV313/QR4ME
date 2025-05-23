@@ -25,5 +25,6 @@ class Cleanup(commands.Cog):
         else:
             await interaction.response.send_message("✅ Nothing to clean.", ephemeral=True)
 
+# ✅ Correct setup function (no recursion)
 async def setup(bot):
-    await bot.load_extension("commands.cleanup")
+    await bot.add_cog(Cleanup(bot))
