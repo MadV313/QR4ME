@@ -4,20 +4,15 @@ from discord import app_commands
 import os
 
 from config import CONFIG
+from utils.permissions import is_admin_user  # ✅ NEW
 
 class Cleanup(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def is_admin(self, interaction: discord.Interaction):
-        if not CONFIG["admin_roles"]:
-            return True
-        user_roles = [str(role.id) for role in interaction.user.roles]
-        return any(role in CONFIG["admin_roles"] for role in user_roles)
-
     @app_commands.command(name="cleanup", description="Delete the most recent preview + ZIP build output")
     async def cleanup(self, interaction: discord.Interaction):
-        if not self.is_admin(interaction):
+        if not is_admin_user(interaction):
             await interaction.response.send_message("❌ You do not have permission.", ephemeral=True)
             return
 
