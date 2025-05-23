@@ -42,8 +42,8 @@ class QRImage(commands.Cog):
         self,
         interaction: discord.Interaction,
         image: discord.Attachment,
-        scale: float = 1.0,
-        object_type: app_commands.Choice[str]
+        object_type: str = "SmallProtectiveCase",
+        scale: float = 1.0
     ):
         if not self.is_admin(interaction):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
@@ -63,7 +63,7 @@ class QRImage(commands.Cog):
             return
 
         qr_text = decoded[0].data.decode("utf-8")
-        obj_type = object_type.value
+        obj_type = object_type  # It's already a string now
 
         # Generate QR + output files
         matrix = generate_qr_matrix(qr_text)
