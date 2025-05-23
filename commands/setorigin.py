@@ -36,5 +36,6 @@ class SetOrigin(commands.Cog):
         except Exception as e:
             await interaction.response.send_message(f"❌ Failed to update origin: {e}", ephemeral=True)
 
+# ✅ This is the correct setup pattern
 async def setup(bot):
-    await bot.load_extension("commands.setorigin")
+    await bot.add_cog(SetOrigin(bot))
