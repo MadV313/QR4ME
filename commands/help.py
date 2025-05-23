@@ -50,6 +50,11 @@ class Help(commands.Cog):
             inline=False
         )
         embed.add_field(
+            name="/revokeperms",
+            value="Revoke a user's permission to run bot commands.",
+            inline=False
+        )
+        embed.add_field(
             name="/cleanup",
             value="Delete the most recent preview image and zip build.",
             inline=False
