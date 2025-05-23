@@ -6,21 +6,16 @@ import json
 
 from config import CONFIG
 from utils.gallery_utils import save_to_gallery
-from utils.channel_utils import get_channel_id  # ✅ new import
+from utils.channel_utils import get_channel_id
+from utils.permissions import is_admin_user  # ✅ Permission logic
 
 class PushGallery(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def is_admin(self, interaction: discord.Interaction):
-        if not CONFIG["admin_roles"]:
-            return True
-        user_roles = [str(role.id) for role in interaction.user.roles]
-        return any(role in CONFIG["admin_roles"] for role in user_roles)
-
     @app_commands.command(name="pushgallery", description="Add the most recent QR build to the public gallery")
     async def pushgallery(self, interaction: discord.Interaction):
-        if not self.is_admin(interaction):
+        if not is_admin_user(interaction):
             await interaction.response.send_message("❌ You do not have permission.", ephemeral=True)
             return
 
@@ -49,7 +44,7 @@ class PushGallery(commands.Cog):
         except Exception as e:
             print(f"[pushgallery] Failed to load object metadata: {e}")
 
-        # Push files + metadata to gallery
+        # Save files + metadata to gallery
         save_to_gallery(preview_path, zip_path, metadata)
 
         # Post to configured gallery channel
@@ -61,7 +56,12 @@ class PushGallery(commands.Cog):
             return
 
         await channel.send(
-            content=f"🧱 **QR Build Pushed to Gallery**\n• Object: `{metadata['object_type']}`\n• Size: {metadata['qr_size']}\n• Objects: {metadata['total_objects']}",
+            content=(
+                f"🧱 **QR Build Pushed to Gallery**\n"
+                f"• Object: `{metadata['object_type']}`\n"
+                f"• Size: {metadata['qr_size']}\n"
+                f"• Objects: {metadata['total_objects']}"
+            ),
             files=[
                 discord.File(zip_path),
                 discord.File(preview_path)
