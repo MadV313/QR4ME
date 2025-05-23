@@ -45,6 +45,11 @@ class Help(commands.Cog):
             inline=False
         )
         embed.add_field(
+            name="/giveperms",
+            value="Grant a user permission to run bot commands without admin role.",
+            inline=False
+        )
+        embed.add_field(
             name="/cleanup",
             value="Delete the most recent preview image and zip build.",
             inline=False
