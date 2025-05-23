@@ -6,6 +6,7 @@ import json
 
 from config import CONFIG
 from utils.gallery_utils import save_to_gallery
+from utils.channel_utils import get_channel_id  # ✅ new import
 
 class PushGallery(commands.Cog):
     def __init__(self, bot):
@@ -23,15 +24,15 @@ class PushGallery(commands.Cog):
             await interaction.response.send_message("❌ You do not have permission.", ephemeral=True)
             return
 
-        preview_path = CONFIG["preview_output_path"]  # should point to /previews/preview_output.png
-        zip_path = CONFIG["zip_output_path"]          # should point to /outputs/output_build.zip
-        object_path = CONFIG["object_output_path"]    # should point to /data/output_build.json
+        preview_path = CONFIG["preview_output_path"]
+        zip_path = CONFIG["zip_output_path"]
+        object_path = CONFIG["object_output_path"]
 
         if not os.path.exists(preview_path) or not os.path.exists(zip_path):
             await interaction.response.send_message("❌ No QR build found to push.", ephemeral=True)
             return
 
-        # Try to load object data for metadata
+        # Extract object metadata for gallery entry
         metadata = {
             "object_type": "Unknown",
             "qr_size": "N/A",
@@ -48,10 +49,26 @@ class PushGallery(commands.Cog):
         except Exception as e:
             print(f"[pushgallery] Failed to load object metadata: {e}")
 
-        # Push to gallery
+        # Push files + metadata to gallery
         save_to_gallery(preview_path, zip_path, metadata)
 
-        await interaction.response.send_message("✅ QR build pushed to public gallery!", ephemeral=True)
+        # Post to configured gallery channel
+        channel_id = get_channel_id("gallery") or CONFIG["admin_channel_id"]
+        channel = self.bot.get_channel(int(channel_id))
+
+        if not channel:
+            await interaction.response.send_message("✅ Build saved, but gallery channel was not found.", ephemeral=True)
+            return
+
+        await channel.send(
+            content=f"🧱 **QR Build Pushed to Gallery**\n• Object: `{metadata['object_type']}`\n• Size: {metadata['qr_size']}\n• Objects: {metadata['total_objects']}",
+            files=[
+                discord.File(zip_path),
+                discord.File(preview_path)
+            ]
+        )
+
+        await interaction.response.send_message("✅ QR build pushed and posted in gallery channel.", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(PushGallery(bot))
