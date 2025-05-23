@@ -6,10 +6,10 @@ def render_qr_preview(matrix: list, output_path: str, scale: int = 64, border: i
     Renders a PNG preview of the QR object layout using thumbnails with grid overlay.
 
     - matrix: 2D list from generate_qr_matrix()
-    - output_path: where to save the image
+    - output_path: where to save the image (can be per-guild)
     - scale: pixel size per QR unit (default 64px for thumbnails)
     - border: empty border (in matrix units)
-    - object_type: used to select thumbnail image (expects .PNG exact case)
+    - object_type: name of the DayZ object (matches thumbnail PNG)
     """
     rows = len(matrix)
     cols = len(matrix[0])
@@ -20,13 +20,14 @@ def render_qr_preview(matrix: list, output_path: str, scale: int = 64, border: i
     img = Image.new("RGB", (img_width, img_height), "white")
     draw = ImageDraw.Draw(img)
 
-    # Match your actual file naming
+    # Match naming convention (case-sensitive .PNG)
     thumbnail_name = object_type + ".PNG"
     thumb_path = os.path.join("assets", "thumbnails", thumbnail_name)
 
     try:
         thumb = Image.open(thumb_path).convert("RGBA").resize((scale, scale))
-    except Exception:
+    except Exception as e:
+        print(f"[preview_renderer] ⚠️ Thumbnail not found: {thumb_path} — using fallback. Error: {e}")
         thumb = Image.new("RGBA", (scale, scale), "black")
 
     for r in range(rows):
@@ -36,9 +37,9 @@ def render_qr_preview(matrix: list, output_path: str, scale: int = 64, border: i
             if matrix[r][c]:
                 img.paste(thumb, (x, y), mask=thumb if thumb.mode == "RGBA" else None)
 
-            # Always draw grid
+            # Draw a light border for each cell
             draw.rectangle([x, y, x + scale, y + scale], outline="#cccccc", width=1)
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     img.save(output_path)
-    print(f"Saved QR preview to {output_path}")
+    print(f"✅ Saved QR preview to {output_path}")
