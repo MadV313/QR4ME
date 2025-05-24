@@ -4,12 +4,14 @@ import os
 CHANNELS_FILE = "data/channels.json"
 
 def load_channels():
+    """Load all channel mappings from the JSON file."""
     if not os.path.exists(CHANNELS_FILE):
         return {}
     with open(CHANNELS_FILE, "r") as f:
         return json.load(f)
 
-def save_channel(channel_type: str, channel_id: str, server_id: str):
+def save_channel(server_id: str, channel_type: str, channel_id: str):
+    """Save a specific channel type (admin, gallery, log) for a given server ID."""
     os.makedirs(os.path.dirname(CHANNELS_FILE), exist_ok=True)
     data = load_channels()
 
@@ -22,6 +24,6 @@ def save_channel(channel_type: str, channel_id: str, server_id: str):
         json.dump(data, f, indent=2)
 
 def get_channel_id(channel_type: str, server_id: str) -> str | None:
+    """Retrieve a stored channel ID by type and server."""
     data = load_channels()
-    server_data = data.get(server_id, {})
-    return server_data.get(channel_type)
+    return data.get(server_id, {}).get(channel_type)
