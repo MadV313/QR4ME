@@ -3,12 +3,12 @@ from discord.ext import commands
 from discord import app_commands
 import os
 
-from config import CONFIG
+from utils.config_utils import get_guild_config  # ✅ use per-server config
 from qr_generator import generate_qr_matrix, qr_to_object_list, save_object_json
 from preview_renderer import render_qr_preview
 from zip_packager import create_qr_zip
 from utils.channel_utils import get_channel_id
-from utils.permissions import is_admin_user  # ✅ Updated permissions
+from utils.permissions import is_admin_user
 
 class QRBuild(commands.Cog):
     def __init__(self, bot):
@@ -40,47 +40,49 @@ class QRBuild(commands.Cog):
         object_type: app_commands.Choice[str],
         scale: float = 1.0
     ):
-        # Permission check
         if not is_admin_user(interaction):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
             return
 
         await interaction.response.defer()
+
+        guild_id = str(interaction.guild.id)
+        config = get_guild_config(guild_id)
         obj_type = object_type.value
 
         # Step 1: Generate QR matrix
         matrix = generate_qr_matrix(text)
 
-        # Step 2: Convert to DayZ object list
-        objects = qr_to_object_list(matrix, obj_type, CONFIG["origin_position"], scale)
+        # Step 2: Generate object list
+        objects = qr_to_object_list(matrix, obj_type, config["origin_position"], scale)
 
-        # Step 3: Save object placement JSON
-        save_object_json(objects, CONFIG["object_output_path"])
+        # Step 3: Save object JSON
+        save_object_json(objects, config["object_output_path"])
 
-        # Step 4: Render preview image
-        render_qr_preview(matrix, CONFIG["preview_output_path"], object_type=obj_type)
+        # Step 4: Render preview
+        render_qr_preview(matrix, config["preview_output_path"], object_type=obj_type)
 
-        # Step 5: Create ZIP package
+        # Step 5: Package ZIP
         create_qr_zip(
-            CONFIG["object_output_path"],
-            CONFIG["preview_output_path"],
-            CONFIG["zip_output_path"],
+            config["object_output_path"],
+            config["preview_output_path"],
+            config["zip_output_path"],
             extra_text=f"QR Size: {len(matrix)}x{len(matrix[0])}\nTotal Objects: {len(objects)}\nObject Used: {obj_type}"
         )
 
-        # Step 6: Send to assigned gallery/admin channel
-        channel_id = get_channel_id("gallery", str(interaction.guild.id)) or CONFIG["admin_channel_id"]
-        channel = self.bot.get_channel(int(channel_id))
+        # Step 6: Send result
+        channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
+        channel = self.bot.get_channel(int(channel_id)) if channel_id else None
 
         if not channel:
-            await interaction.followup.send("❌ Could not find configured channel.", ephemeral=True)
+            await interaction.followup.send("❌ Could not find configured gallery channel.", ephemeral=True)
             return
 
         await channel.send(
             content=f"🧱 **QR Build Complete**\n• Size: {len(matrix)}x{len(matrix[0])}\n• Objects: {len(objects)}\n• Type: `{obj_type}`",
             files=[
-                discord.File(CONFIG["zip_output_path"]),
-                discord.File(CONFIG["preview_output_path"])
+                discord.File(config["zip_output_path"]),
+                discord.File(config["preview_output_path"])
             ]
         )
 
