@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 import os
 
-from utils.config_utils import get_guild_config  # ✅ use per-server config
+from utils.config_utils import get_guild_config  # ✅ Per-server config
 from qr_generator import generate_qr_matrix, qr_to_object_list, save_object_json
 from preview_renderer import render_qr_preview
 from zip_packager import create_qr_zip
@@ -70,7 +70,7 @@ class QRBuild(commands.Cog):
             extra_text=f"QR Size: {len(matrix)}x{len(matrix[0])}\nTotal Objects: {len(objects)}\nObject Used: {obj_type}"
         )
 
-        # Step 6: Send result
+        # Step 6: Send to gallery or fallback admin channel
         channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
         channel = self.bot.get_channel(int(channel_id)) if channel_id else None
 
