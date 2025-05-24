@@ -9,7 +9,8 @@ def _load_admin_users():
         return {}
     with open(ADMIN_USERS_FILE, "r") as f:
         data = json.load(f)
-    # Auto-migrate old flat formats to valid structure
+
+    # Auto-migrate flat formats to proper dict structure
     fixed = {}
     for sid, value in data.items():
         if isinstance(value, list):
@@ -29,25 +30,26 @@ def is_admin_user(interaction) -> bool:
     """
     Checks if the user is allowed based on:
     - Their ID in server-specific permitted_users
-    - Their role ID in server-specific admin_roles
+    - Their role ID in global admin_roles from config.json
     """
     try:
         server_id = str(interaction.guild.id)
         user_id = str(interaction.user.id)
         user_roles = [str(role.id) for role in getattr(interaction.user, "roles", [])]
 
+        # Server-specific permitted users
         data = _load_admin_users()
         permitted = data.get(server_id, {}).get("permitted_users", [])
 
         if user_id in permitted:
             return True
 
+        # Global admin role fallback
         with open(CONFIG_PATH, "r") as f:
             config = json.load(f)
-
         admin_roles = config.get("admin_roles", [])
-        return any(role_id in admin_roles for role_id in user_roles)
 
+        return any(role_id in admin_roles for role_id in user_roles)
     except Exception as e:
         print(f"[permissions] Error in is_admin_user: {e}")
         return False
