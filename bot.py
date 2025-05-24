@@ -6,6 +6,7 @@ import asyncio
 import json
 
 from config import CONFIG
+from utils.permissions import add_admin_user  # ✅ Added for owner auto-permit
 
 # --- Bot Setup ---
 intents = discord.Intents.default()
@@ -37,13 +38,14 @@ def load_or_init_guild_config(guild_id: int, invoking_user_id: int) -> dict:
     print(f"[+] Auto-config created for guild {guild_id}")
     return new_config
 
-# --- On Join: Auto-generate guild config ---
+# --- On Join: Auto-generate guild config and auto-permit owner ---
 @bot.event
 async def on_guild_join(guild):
     try:
         owner = guild.owner or (await guild.fetch_owner())
         load_or_init_guild_config(guild.id, owner.id)
-        print(f"[+] Initialized config for: {guild.name} ({guild.id})")
+        add_admin_user(owner.id, str(guild.id))  # ✅ Auto grant permission
+        print(f"[+] Initialized config and permission for: {guild.name} ({guild.id})")
     except Exception as e:
         print(f"❌ Failed to create config for {guild.id}: {e}")
 
