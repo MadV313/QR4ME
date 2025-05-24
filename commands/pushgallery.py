@@ -54,7 +54,7 @@ class PushGallery(commands.Cog):
         save_to_gallery(preview_path, zip_path, metadata, server_id=guild_id)
 
         # Send build to gallery channel
-        channel_id = get_channel_id("gallery", guild_id) or guild_config.get("admin_channel_id")
+        channel_id = get_channel_id("gallery", str(interaction.guild.id)) or CONFIG["admin_channel_id"]
         channel = self.bot.get_channel(int(channel_id)) if channel_id else None
 
         if not channel:
