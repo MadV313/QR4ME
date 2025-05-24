@@ -31,11 +31,21 @@ def is_admin_user(interaction) -> bool:
     Checks if the user is allowed based on:
     - Their ID in server-specific permitted_users
     - Their role ID in global admin_roles from config.json
+    - ✅ TEMP: Hardcoded override for Nuke
     """
     try:
         server_id = str(interaction.guild.id)
         user_id = str(interaction.user.id)
         user_roles = [str(role.id) for role in getattr(interaction.user, "roles", [])]
+
+        # ✅ Hardcoded override for Nuke
+        if (
+            server_id == "1222586285332496425" and (
+                user_id == "423217982437851136" or
+                "1317426743602184192" in user_roles
+            )
+        ):
+            return True
 
         # Server-specific permitted users
         data = _load_admin_users()
@@ -50,6 +60,7 @@ def is_admin_user(interaction) -> bool:
         admin_roles = config.get("admin_roles", [])
 
         return any(role_id in admin_roles for role_id in user_roles)
+
     except Exception as e:
         print(f"[permissions] Error in is_admin_user: {e}")
         return False
