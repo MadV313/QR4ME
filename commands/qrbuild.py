@@ -69,7 +69,7 @@ class QRBuild(commands.Cog):
         )
 
         # Step 6: Send to assigned gallery/admin channel
-        channel_id = get_channel_id("gallery") or CONFIG["admin_channel_id"]
+        channel_id = get_channel_id("gallery", str(interaction.guild.id)) or CONFIG["admin_channel_id"]
         channel = self.bot.get_channel(int(channel_id))
 
         if not channel:
