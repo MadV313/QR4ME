@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-from config import CONFIG
 from utils.channel_utils import save_channel
 from utils.permissions import is_admin_user  # ✅ Centralized permission logic
 
@@ -24,13 +23,18 @@ class SetChannel(commands.Cog):
         self,
         interaction: discord.Interaction,
         type: app_commands.Choice[str],
-        target: discord.TextChannel
+        target: discord.abc.GuildChannel
     ):
         if not is_admin_user(interaction):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
             return
 
-        # Ensure the bot can post in the selected channel
+        # Validate it is a text-based channel (TextChannel or Forum)
+        if not isinstance(target, discord.TextChannel):
+            await interaction.response.send_message("❌ Please select a valid text channel.", ephemeral=True)
+            return
+
+        # Ensure the bot has permission to send messages in that channel
         permissions = target.permissions_for(interaction.guild.me)
         if not permissions.send_messages:
             await interaction.response.send_message(
@@ -39,7 +43,7 @@ class SetChannel(commands.Cog):
             )
             return
 
-        # Save the channel ID under this guild
+        # Save channel mapping under this server
         guild_id = str(interaction.guild.id)
         save_channel(guild_id, type.value, str(target.id))
 
