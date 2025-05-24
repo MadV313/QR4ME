@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 from pyzbar.pyzbar import decode
 
-from config import CONFIG
+from utils.config_utils import get_guild_config  # ✅ Multi-server support
 from qr_generator import generate_qr_matrix, qr_to_object_list, save_object_json
 from preview_renderer import render_qr_preview
 from zip_packager import create_qr_zip
@@ -49,6 +49,8 @@ class QRImage(commands.Cog):
 
         await interaction.response.defer()
         obj_type = object_type.value
+        guild_id = str(interaction.guild.id)
+        config = get_guild_config(guild_id)
 
         # Step 1: Download image
         img_bytes = await image.read()
@@ -63,21 +65,21 @@ class QRImage(commands.Cog):
 
         qr_text = decoded[0].data.decode("utf-8")
 
-        # Step 3: Generate build
+        # Step 3: Generate object layout
         matrix = generate_qr_matrix(qr_text)
-        objects = qr_to_object_list(matrix, obj_type, CONFIG["origin_position"], scale)
-        save_object_json(objects, CONFIG["object_output_path"])
-        render_qr_preview(matrix, CONFIG["preview_output_path"], object_type=obj_type)
+        objects = qr_to_object_list(matrix, obj_type, config["origin_position"], scale)
+        save_object_json(objects, config["object_output_path"])
+        render_qr_preview(matrix, config["preview_output_path"], object_type=obj_type)
         create_qr_zip(
-            CONFIG["object_output_path"],
-            CONFIG["preview_output_path"],
-            CONFIG["zip_output_path"],
+            config["object_output_path"],
+            config["preview_output_path"],
+            config["zip_output_path"],
             extra_text=f"(from image)\nQR Size: {len(matrix)}x{len(matrix[0])}\nTotal Objects: {len(objects)}\nObject Used: {obj_type}"
         )
 
-        # Step 4: Post to configured gallery/admin channel
-        channel_id = get_channel_id("gallery", str(interaction.guild.id)) or CONFIG["admin_channel_id"]
-        channel = self.bot.get_channel(int(channel_id))
+        # Step 4: Send results to assigned gallery/admin channel
+        channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
+        channel = self.bot.get_channel(int(channel_id)) if channel_id else None
 
         if not channel:
             await interaction.followup.send("✅ Build created, but gallery channel was not found.", ephemeral=True)
@@ -86,8 +88,8 @@ class QRImage(commands.Cog):
         await channel.send(
             content=f"📷 **QR Image Build Complete**\n• Decoded: `{qr_text}`\n• Size: {len(matrix)}x{len(matrix[0])}\n• Objects: {len(objects)}\n• Type: `{obj_type}`",
             files=[
-                discord.File(CONFIG["zip_output_path"]),
-                discord.File(CONFIG["preview_output_path"])
+                discord.File(config["zip_output_path"]),
+                discord.File(config["preview_output_path"])
             ]
         )
 
