@@ -1,26 +1,40 @@
 import json
 import os
 
-DEFAULT_PREVIEW_PATH = "outputs/preview.png"
-DEFAULT_ZIP_PATH = "outputs/preview_build.zip"
-
 CONFIGS_FILE = "data/guild_configs.json"
+
+DEFAULTS = {
+    "origin_position": {"x": 5000.0, "y": 0.0, "z": 5000.0},
+    "preview_output_path": "previews/{guild_id}_preview.png",
+    "zip_output_path": "outputs/{guild_id}_qr.zip",
+    "object_output_path": "data/objects_{guild_id}.json"
+}
+
 
 def get_guild_config(guild_id: int) -> dict:
     """
-    Load per-guild configuration. Falls back to default if not found.
+    Load per-guild configuration. Fills in any missing keys with defaults.
     """
+    os.makedirs("data", exist_ok=True)
+    guild_id_str = str(guild_id)
+
     try:
         with open(CONFIGS_FILE, "r") as f:
             all_configs = json.load(f)
     except FileNotFoundError:
         all_configs = {}
 
-    guild_id_str = str(guild_id)
     config = all_configs.get(guild_id_str, {})
 
-    return {
-        "preview_output_path": config.get("preview_output_path", DEFAULT_PREVIEW_PATH),
-        "zip_output_path": config.get("zip_output_path", DEFAULT_ZIP_PATH),
-        "object_output_path": config.get("object_output_path", "data/output_build.json")
-    }
+    updated = False
+    for key, value in DEFAULTS.items():
+        if key not in config:
+            config[key] = value if not isinstance(value, str) else value.format(guild_id=guild_id_str)
+            updated = True
+
+    if updated:
+        all_configs[guild_id_str] = config
+        with open(CONFIGS_FILE, "w") as f:
+            json.dump(all_configs, f, indent=2)
+
+    return config
