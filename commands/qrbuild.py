@@ -19,8 +19,7 @@ class QRBuild(commands.Cog):
         text="The text or URL to encode as a QR code",
         overall_scale="Overall object scale multiplier (default 0.5 or overridden per object)",
         object_spacing="Spacing between objects (default 1.0 or overridden per object)",
-        object_type="Choose the object to use for QR layout",
-        export_mode="Choose file output type: .zip (default) or just .json"
+        object_type="Choose the object to use for QR layout"
     )
     @app_commands.choices(
         object_type=[
@@ -34,10 +33,6 @@ class QRBuild(commands.Cog):
             app_commands.Choice(name="Armband (Black)", value="Armband_Black"),
             app_commands.Choice(name="Jerry Can", value="JerryCan"),
             app_commands.Choice(name="Box Wooden", value="BoxWooden"),
-        ],
-        export_mode=[
-            app_commands.Choice(name="ZIP (Preview + README)", value="zip"),
-            app_commands.Choice(name="JSON Only", value="json")
         ]
     )
     async def qrbuild(
@@ -46,8 +41,7 @@ class QRBuild(commands.Cog):
         text: str,
         object_type: app_commands.Choice[str],
         overall_scale: float = None,
-        object_spacing: float = None,
-        export_mode: app_commands.Choice[str] = None
+        object_spacing: float = None
     ):
         if not is_admin_user(interaction):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
@@ -58,7 +52,6 @@ class QRBuild(commands.Cog):
         guild_id = str(interaction.guild.id)
         config = get_guild_config(guild_id)
         obj_type = object_type.value
-        mode = export_mode.value if export_mode else "zip"
 
         # 🔁 Apply per-object overrides or fallback to global config
         overall_scale = overall_scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
@@ -83,7 +76,7 @@ class QRBuild(commands.Cog):
         # Step 4: Render preview
         render_qr_preview(matrix, config["preview_output_path"], object_type=obj_type)
 
-        # Step 5: Export via selected mode
+        # Step 5: Always create zip (now JSON only)
         final_path = create_qr_zip(
             config["object_output_path"],
             config["preview_output_path"],
@@ -93,8 +86,7 @@ class QRBuild(commands.Cog):
                 f"Total Objects: {len(objects)}\n"
                 f"Object Used: {obj_type}\n"
                 f"Scale: {overall_scale} | Spacing: {object_spacing}"
-            ),
-            export_mode=mode
+            )
         )
 
         # Step 6: Send to gallery or fallback admin channel
@@ -106,7 +98,7 @@ class QRBuild(commands.Cog):
             return
 
         file_to_send = discord.File(final_path)
-        preview_file = discord.File(config["preview_output_path"]) if mode == "zip" else None
+        preview_file = discord.File(config["preview_output_path"])
 
         await channel.send(
             content=(
@@ -116,7 +108,7 @@ class QRBuild(commands.Cog):
                 f"• Type: `{obj_type}`\n"
                 f"• Scale: `{overall_scale}` | Spacing: `{object_spacing}`"
             ),
-            files=[file for file in [file_to_send, preview_file] if file]
+            files=[file_to_send, preview_file]
         )
 
         await interaction.followup.send("✅ QR build generated and posted in gallery channel.", ephemeral=True)
