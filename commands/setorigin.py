@@ -1,42 +1,9 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import json
-import os
 
-from utils.permissions import is_admin_user  # ✅ Centralized admin check
-
-CONFIG_FOLDER = "data/configs"
-
-def update_origin_in_config(guild_id: str, x: float, y: float, z: float):
-    os.makedirs(CONFIG_FOLDER, exist_ok=True)
-    config_path = os.path.join(CONFIG_FOLDER, f"config_{guild_id}.json")
-
-    # ✅ If config doesn't exist, create it with default structure
-    if not os.path.exists(config_path):
-        config = {
-            "admin_roles": [],
-            "permitted_users": [],
-            "origin_position": {"x": x, "y": y, "z": z},
-            "preview_output_path": f"previews/{guild_id}_preview.png",
-            "object_output_path": f"data/objects_{guild_id}.json",
-            "zip_output_path": f"outputs/{guild_id}_qr.zip",
-            "admin_channel_id": None,
-            "originOffset": {"x": 0.0, "y": 0.0, "z": 0.0},
-            "defaultScale": 0.5,
-            "defaultSpacing": 1.0,
-            "selected_map": "Chernarus",
-            "map_coordinates": {"x": x, "y": y, "z": z},
-            "custom_spacing": {},
-            "custom_scale": {}
-        }
-    else:
-        with open(config_path, "r") as f:
-            config = json.load(f)
-        config["origin_position"] = {"x": x, "y": y, "z": z}
-
-    with open(config_path, "w") as f:
-        json.dump(config, f, indent=2)
+from utils.config_utils import get_guild_config, save_guild_config
+from utils.permissions import is_admin_user
 
 class SetOrigin(commands.Cog):
     def __init__(self, bot):
@@ -53,17 +20,17 @@ class SetOrigin(commands.Cog):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
             return
 
-        guild_id = str(interaction.guild.id)
+        guild_id = interaction.guild.id
+        config = get_guild_config(guild_id)
 
-        try:
-            update_origin_in_config(guild_id, x, y, z)
-            await interaction.response.send_message(
-                f"📍 **New origin position set for this server:**\n"
-                f"> `X`: {x}\n> `Y`: {y}\n> `Z`: {z}",
-                ephemeral=True
-            )
-        except Exception as e:
-            await interaction.response.send_message(f"❌ Failed to update origin: {e}", ephemeral=True)
+        config["origin_position"] = {"x": x, "y": y, "z": z}
+        save_guild_config(guild_id, config)
+
+        await interaction.response.send_message(
+            f"📍 **New origin position set for this server:**\n"
+            f"> `X`: {x}\n> `Y`: {y}\n> `Z`: {z}",
+            ephemeral=True
+        )
 
 async def setup(bot):
     await bot.add_cog(SetOrigin(bot))
