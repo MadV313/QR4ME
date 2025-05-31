@@ -17,8 +17,8 @@ class QRBuild(commands.Cog):
     @app_commands.command(name="qrbuild", description="Convert text into a DayZ object QR layout")
     @app_commands.describe(
         text="The text or URL to encode as a QR code",
-        overall_scale="Overall object scale multiplier (default 0.5)",
-        object_spacing="Spacing between objects (default 1.0)",
+        overall_scale="Overall object scale multiplier (default 0.5 or overridden per object)",
+        object_spacing="Spacing between objects (default 1.0 or overridden per object)",
         object_type="Choose the object to use for QR layout",
         export_mode="Choose file output type: .zip (default) or just .json"
     )
@@ -45,8 +45,8 @@ class QRBuild(commands.Cog):
         interaction: discord.Interaction,
         text: str,
         object_type: app_commands.Choice[str],
-        overall_scale: float = 0.5,
-        object_spacing: float = 1.0,
+        overall_scale: float = None,
+        object_spacing: float = None,
         export_mode: app_commands.Choice[str] = None
     ):
         if not is_admin_user(interaction):
@@ -59,6 +59,10 @@ class QRBuild(commands.Cog):
         config = get_guild_config(guild_id)
         obj_type = object_type.value
         mode = export_mode.value if export_mode else "zip"
+
+        # 🔁 Apply per-object overrides or fallback to global config
+        overall_scale = overall_scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
+        object_spacing = object_spacing or config.get("custom_spacing", {}).get(obj_type, config.get("defaultSpacing", 1.0))
 
         # Step 1: Generate QR matrix
         matrix = generate_qr_matrix(text)
