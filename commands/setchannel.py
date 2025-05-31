@@ -9,15 +9,14 @@ class SetChannel(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="setchannel", description="Assign a bot channel role like admin, gallery, or log")
+    @app_commands.command(name="setchannel", description="Assign a bot channel role like admin or gallery")
     @app_commands.describe(
-        type="The type of channel to assign (admin, gallery, log)",
+        type="The type of channel to assign (admin or gallery)",
         target="The channel to assign this role to"
     )
     @app_commands.choices(type=[
         app_commands.Choice(name="Admin Channel", value="admin"),
-        app_commands.Choice(name="Gallery Channel", value="gallery"),
-        app_commands.Choice(name="Log Channel", value="log")
+        app_commands.Choice(name="Gallery Channel", value="gallery")
     ])
     async def setchannel(
         self,
@@ -29,7 +28,7 @@ class SetChannel(commands.Cog):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
             return
 
-        # Validate it is a text-based channel (TextChannel or Forum)
+        # Validate it is a text-based channel
         if not isinstance(target, discord.TextChannel):
             await interaction.response.send_message("❌ Please select a valid text channel.", ephemeral=True)
             return
