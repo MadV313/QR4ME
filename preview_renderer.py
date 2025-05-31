@@ -20,12 +20,16 @@ def render_qr_preview(matrix: list, output_path: str, scale: int = 64, border: i
     img = Image.new("RGB", (img_width, img_height), "white")
     draw = ImageDraw.Draw(img)
 
-    # Match naming convention (case-sensitive .PNG)
     thumbnail_name = object_type + ".PNG"
     thumb_path = os.path.join("assets", "thumbnails", thumbnail_name)
 
     try:
         thumb = Image.open(thumb_path).convert("RGBA").resize((scale, scale))
+
+        # Special case: Rotate DoorTestKit 90 degrees to stand upright
+        if object_type.lower() == "doortestkit":
+            thumb = thumb.rotate(90, expand=True)
+
     except Exception as e:
         print(f"[preview_renderer] ⚠️ Thumbnail not found: {thumb_path} — using fallback. Error: {e}")
         thumb = Image.new("RGBA", (scale, scale), "black")
