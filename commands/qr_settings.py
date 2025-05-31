@@ -23,8 +23,6 @@ OBJECT_SIZE_ADJUSTMENTS = {
     "BoxWooden": 1.0
 }
 
-OBJECT_CHOICES = list(OBJECT_SIZE_ADJUSTMENTS.keys())
-
 MAP_CHOICES = [
     app_commands.Choice(name="Chernarus", value="Chernarus"),
     app_commands.Choice(name="Livonia", value="Livonia"),
@@ -73,15 +71,7 @@ class ObjectInfoView(discord.ui.View):
         await interaction.response.send_modal(ObjectAdjustModal(config=self.config))
 
 class ObjectAdjustModal(discord.ui.Modal, title="Adjust QR Settings"):
-    object_type = discord.ui.Select(
-        placeholder="Select Object Type",
-        min_values=1,
-        max_values=1,
-        options=[
-            discord.SelectOption(label=obj, value=obj)
-            for obj in OBJECT_SIZE_ADJUSTMENTS.keys()
-        ]
-    )
+    object_type = discord.ui.TextInput(label="Object Type", placeholder="e.g. JerryCan", required=True)
     spacing = discord.ui.TextInput(label="Spacing Multiplier", placeholder="e.g. 1.0", required=False)
     scale = discord.ui.TextInput(label="Scale (Box Size)", placeholder="e.g. 0.5", required=False)
     origin_x = discord.ui.TextInput(label="Origin X", placeholder="e.g. 5000.0", required=False)
@@ -95,22 +85,21 @@ class ObjectAdjustModal(discord.ui.Modal, title="Adjust QR Settings"):
     async def on_submit(self, interaction: discord.Interaction):
         guild_id = str(interaction.guild.id)
 
-        obj = self.object_type.values[0]
-        spacing_val = float(self.spacing.value.strip()) if self.spacing.value else OBJECT_SIZE_ADJUSTMENTS[obj]
+        obj = self.object_type.value.strip()
+        spacing_val = float(self.spacing.value.strip()) if self.spacing.value else OBJECT_SIZE_ADJUSTMENTS.get(obj, 1.0)
         scale_val = float(self.scale.value.strip()) if self.scale.value else 1.0
         x = float(self.origin_x.value.strip()) if self.origin_x.value else 5000.0
         y = float(self.origin_y.value.strip()) if self.origin_y.value else 0.0
         z = float(self.origin_z.value.strip()) if self.origin_z.value else 5000.0
 
-        # 🧠 Update config
+        # Update and save
         self.config["default_object"] = obj
         self.config.setdefault("custom_spacing", {})[obj] = spacing_val
         self.config.setdefault("custom_scale", {})[obj] = scale_val
         self.config["origin_position"] = {"x": x, "y": y, "z": z}
-
         update_guild_config(guild_id, self.config)
 
-        # 🧠 Trigger rebuild immediately
+        # Rebuild logic
         if "last_qr_data" not in self.config:
             await interaction.response.send_message("⚠️ No previous QR text found. Run `/qrbuild` or `/qrimage` first.", ephemeral=True)
             return
@@ -123,6 +112,7 @@ class ObjectAdjustModal(discord.ui.Modal, title="Adjust QR Settings"):
         render_qr_preview(matrix, self.config["preview_output_path"], object_type=obj)
         create_qr_zip(self.config["object_output_path"], self.config["preview_output_path"], self.config["zip_output_path"])
 
+        # Send to gallery
         channel_id = get_channel_id("gallery", guild_id) or self.config.get("admin_channel_id")
         channel = interaction.client.get_channel(int(channel_id)) if channel_id else None
 
