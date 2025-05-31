@@ -7,9 +7,11 @@ DEFAULTS = {
     "origin_position": {"x": 5000.0, "y": 0.0, "z": 5000.0},
     "preview_output_path": "previews/{guild_id}_preview.png",
     "zip_output_path": "outputs/{guild_id}_qr.zip",
-    "object_output_path": "data/objects_{guild_id}.json"
+    "object_output_path": "data/objects_{guild_id}.json",  # ✅ Missing comma fixed here
+    "originOffset": {"x": 0.0, "y": 0.0, "z": 0.0},
+    "defaultScale": 0.5,
+    "defaultSpacing": 1.0
 }
-
 
 def get_guild_config(guild_id: int) -> dict:
     """
