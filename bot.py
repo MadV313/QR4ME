@@ -32,7 +32,8 @@ def load_or_init_guild_config(guild_id: int, invoking_user_id: int) -> dict:
         "preview_output_path": f"previews/{guild_id}_preview.png",
         "object_output_path": f"data/objects_{guild_id}.json",
         "zip_output_path": f"outputs/{guild_id}_qr.zip",
-        "admin_channel_id": None
+        "admin_channel_id": None,
+        "export_as_zip": True  # ✅ NEW toggle added
     }
 
     with open(path, "w") as f:
