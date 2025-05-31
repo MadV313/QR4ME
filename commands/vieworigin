@@ -1,16 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import json
-import os
-
-ORIGINS_FILE = "data/origins.json"
-
-def load_origins():
-    if not os.path.exists(ORIGINS_FILE):
-        return {}
-    with open(ORIGINS_FILE, "r") as f:
-        return json.load(f)
+from utils.config_utils import get_guild_config  # ✅ Central config source
 
 class ViewOrigin(commands.Cog):
     def __init__(self, bot):
@@ -19,16 +10,10 @@ class ViewOrigin(commands.Cog):
     @app_commands.command(name="vieworigin", description="Check the current origin position used for QR placement")
     async def vieworigin(self, interaction: discord.Interaction):
         guild_id = str(interaction.guild.id)
-        try:
-            data = load_origins()
-            origin = data.get(guild_id)
 
-            if not origin:
-                await interaction.response.send_message(
-                    "ℹ️ No origin has been set for this server yet. Use `/setorigin` first.",
-                    ephemeral=True
-                )
-                return
+        try:
+            config = get_guild_config(guild_id)
+            origin = config.get("origin_position", {})
 
             x = origin.get("x", "N/A")
             y = origin.get("y", "N/A")
