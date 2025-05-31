@@ -61,3 +61,6 @@ def save_guild_config(guild_id: int, updated_config: dict) -> None:
     all_configs[guild_id_str] = updated_config
     with open(CONFIGS_FILE, "w") as f:
         json.dump(all_configs, f, indent=2)
+
+# Alias to match expected import
+update_guild_config = save_guild_config
