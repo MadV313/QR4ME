@@ -20,7 +20,8 @@ class QRImage(commands.Cog):
     @app_commands.command(name="qrimage", description="Upload a QR code image to generate a DayZ object layout")
     @app_commands.describe(
         image="Upload a PNG or JPG of a QR code",
-        scale="Spacing between objects (default 1.0)",
+        scale="Overall object scale (default 0.5)",
+        object_spacing="Spacing between objects (default 1.0)",
         object_type="Choose the object to use for QR layout"
     )
     @app_commands.choices(
@@ -42,7 +43,8 @@ class QRImage(commands.Cog):
         interaction: discord.Interaction,
         image: discord.Attachment,
         object_type: app_commands.Choice[str],
-        scale: float = 1.0
+        scale: float = 0.5,
+        object_spacing: float = 1.0
     ):
         if not is_admin_user(interaction):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
@@ -68,14 +70,26 @@ class QRImage(commands.Cog):
 
         # Step 3: Generate object layout
         matrix = generate_qr_matrix(qr_text)
-        objects = qr_to_object_list(matrix, obj_type, config["origin_position"], scale)
+        objects = qr_to_object_list(
+            matrix,
+            obj_type,
+            config["origin_position"],
+            config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0}),
+            scale,
+            object_spacing
+        )
         save_object_json(objects, config["object_output_path"])
         render_qr_preview(matrix, config["preview_output_path"], object_type=obj_type)
         create_qr_zip(
             config["object_output_path"],
             config["preview_output_path"],
             config["zip_output_path"],
-            extra_text=f"(from image)\nQR Size: {len(matrix)}x{len(matrix[0])}\nTotal Objects: {len(objects)}\nObject Used: {obj_type}"
+            extra_text=(
+                f"(from image)\nQR Size: {len(matrix)}x{len(matrix[0])}\n"
+                f"Total Objects: {len(objects)}\n"
+                f"Object Used: {obj_type}\n"
+                f"Scale: {scale} | Spacing: {object_spacing}"
+            )
         )
 
         # Step 4: Send results to assigned gallery/admin channel
@@ -87,7 +101,14 @@ class QRImage(commands.Cog):
             return
 
         await channel.send(
-            content=f"📷 **QR Image Build Complete**\n• Decoded: `{qr_text}`\n• Size: {len(matrix)}x{len(matrix[0])}\n• Objects: {len(objects)}\n• Type: `{obj_type}`",
+            content=(
+                f"📷 **QR Image Build Complete**\n"
+                f"• Decoded: `{qr_text}`\n"
+                f"• Size: {len(matrix)}x{len(matrix[0])}\n"
+                f"• Objects: {len(objects)}\n"
+                f"• Type: `{obj_type}`\n"
+                f"• Scale: `{scale}` | Spacing: `{object_spacing}`"
+            ),
             files=[
                 discord.File(config["zip_output_path"]),
                 discord.File(config["preview_output_path"])
