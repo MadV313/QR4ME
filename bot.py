@@ -82,6 +82,7 @@ async def load_extensions():
     await bot.load_extension("commands.giveperms")
     await bot.load_extension("commands.revokeperms")
     await bot.load_extension("commands.help")
+    await bot.load_extension("commands.qr_settings")
 
 # --- Launch Bot ---
 if __name__ == "__main__":
