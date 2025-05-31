@@ -28,7 +28,6 @@ OBJECT_SIZE_ADJUSTMENTS = {
     "Armband_Black": 0.5
 }
 
-
 def generate_qr_matrix(data: str, box_size: int = 1) -> list:
     qr = qrcode.QRCode(
         version=None,
@@ -39,7 +38,6 @@ def generate_qr_matrix(data: str, box_size: int = 1) -> list:
     qr.add_data(data)
     qr.make(fit=True)
     return qr.get_matrix()
-
 
 def qr_to_object_list(matrix: list, object_type: str, origin: dict, scale: float = 1.0) -> list:
     rows = len(matrix)
@@ -52,16 +50,16 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, scale: float
 
     objects = []
 
-    # ✅ Background camera object
-    background = {
+    # ✅ DoorTestCamera rotated 90° on Y axis and stood upright
+    camera_object = {
         "name": "DoorTestCamera",
-        "pos": [origin["x"], origin["y"] - 0.01, origin["z"]],
-        "ypr": [90.0, 0.0, 0.0],
+        "pos": [origin["x"], origin["y"], origin["z"]],
+        "ypr": [0.0, 90.0, 0.0],
         "scale": 1.0,
         "enableCEPersistency": 0,
         "customString": ""
     }
-    objects.append(background)
+    objects.append(camera_object)
 
     for row in range(rows):
         for col in range(cols):
@@ -72,7 +70,7 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, scale: float
                 obj = {
                     "name": resolved_type,
                     "pos": [x, origin["y"], z],
-                    "ypr": [0.0, 0.0, 0.0],
+                    "ypr": [0.0, 0.0, 0.0],  # ✅ All objects upright
                     "scale": 1.0,
                     "enableCEPersistency": 0,
                     "customString": ""
@@ -81,12 +79,10 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, scale: float
 
     return objects
 
-
 def save_object_json(object_list: list, output_path: str):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as f:
         json.dump({"Objects": object_list}, f, indent=2)
-
 
 # ✅ Manual test (optional)
 if __name__ == "__main__":
