@@ -6,19 +6,22 @@ import os
 
 from utils.permissions import is_admin_user  # ✅ Centralized admin check
 
-ORIGINS_FILE = "data/origins.json"
+CONFIG_FOLDER = "data/configs"
 
-def load_origins():
-    if not os.path.exists(ORIGINS_FILE):
-        return {}
-    with open(ORIGINS_FILE, "r") as f:
-        return json.load(f)
+def update_origin_in_config(guild_id: str, x: float, y: float, z: float):
+    os.makedirs(CONFIG_FOLDER, exist_ok=True)
+    config_path = os.path.join(CONFIG_FOLDER, f"config_{guild_id}.json")
 
-def save_origin(guild_id: str, x: float, y: float, z: float):
-    data = load_origins()
-    data[guild_id] = {"x": x, "y": y, "z": z}
-    with open(ORIGINS_FILE, "w") as f:
-        json.dump(data, f, indent=2)
+    if not os.path.exists(config_path):
+        raise FileNotFoundError("Config file not found. Please rejoin the server or contact an admin.")
+
+    with open(config_path, "r") as f:
+        config = json.load(f)
+
+    config["origin_position"] = {"x": x, "y": y, "z": z}
+
+    with open(config_path, "w") as f:
+        json.dump(config, f, indent=2)
 
 class SetOrigin(commands.Cog):
     def __init__(self, bot):
@@ -38,7 +41,7 @@ class SetOrigin(commands.Cog):
         guild_id = str(interaction.guild.id)
 
         try:
-            save_origin(guild_id, x, y, z)
+            update_origin_in_config(guild_id, x, y, z)
             await interaction.response.send_message(
                 f"📍 **New origin position set for this server:**\n"
                 f"> `X`: {x}\n> `Y`: {y}\n> `Z`: {z}",
