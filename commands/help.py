@@ -10,53 +10,44 @@ class Help(commands.Cog):
     async def help(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="📘 QR-Build Bot Help",
-            description="Here are the available bot commands and what they do:",
+            description="🛠️ Setup your build correctly by following the command flow below.\n"
+                        "Make sure to run `/setorigin` and `/setmap` before building anything.\n\n"
+                        "Here are the available bot commands:",
             color=discord.Color.blurple()
         )
 
+        # 🔧 Setup Commands
         embed.add_field(
-            name="/qrbuild",
-            value="🔤 Convert a block of text or URL into a grid of DayZ objects (QR format).",
+            name="🔧 Setup Commands",
+            value=(
+                "**/setorigin** — Set the in-game X/Y/Z coordinates for QR layout placement.\n"
+                "**/setmap** — Choose the DayZ map (e.g., Chernarus, Livonia, Sakhalin) and its coordinates.\n"
+                "**/objectinfo** — View current object scale, spacing, and grid size. Offers update or re-run options."
+            ),
             inline=False
         )
+
+        # 🧱 Build Commands
         embed.add_field(
-            name="/qrimage",
-            value="🖼️ Upload a QR code image (PNG/JPG) and generate a build layout from it.",
+            name="🧱 Build Commands",
+            value=(
+                "**/qrbuild** — Convert a block of text or URL into a QR code layout using in-game objects.\n"
+                "**/qrimage** — Upload a QR image (PNG/JPG) and convert it into a build layout.\n"
+                "**/preview** — Re-post the last build’s preview image and export file (ZIP/JSON).\n"
+                "**/pushgallery** — Push your latest build to the public gallery."
+            ),
             inline=False
         )
+
+        # ⚙️ Configuration & Management
         embed.add_field(
-            name="/preview",
-            value="📦 Re-post the most recent build's preview image and ZIP output.",
-            inline=False
-        )
-        embed.add_field(
-            name="/pushgallery",
-            value="🌐 Push the most recent build into the public gallery and index it.",
-            inline=False
-        )
-        embed.add_field(
-            name="/setorigin",
-            value="📍 Update the world coordinate (X/Y/Z) used as the center of QR layouts.",
-            inline=False
-        )
-        embed.add_field(
-            name="/setchannel",
-            value="📢 Assign channels used for bot output: admin, gallery, or log.",
-            inline=False
-        )
-        embed.add_field(
-            name="/giveperms",
-            value="✅ Grant a user permission to run QR commands without admin role.",
-            inline=False
-        )
-        embed.add_field(
-            name="/revokeperms",
-            value="🚫 Revoke a user's permission to run bot commands.",
-            inline=False
-        )
-        embed.add_field(
-            name="/cleanup",
-            value="🧹 Delete the last preview and ZIP build from the bot's output.",
+            name="⚙️ Configuration & Admin Tools",
+            value=(
+                "**/setchannel** — Assign admin, gallery, or log channels.\n"
+                "**/giveperms** — Grant a user permission to use bot commands without an admin role.\n"
+                "**/revokeperms** — Revoke a user’s permission to run QR bot commands.\n"
+                "**/cleanup** — Delete the most recent build preview and ZIP/JSON output."
+            ),
             inline=False
         )
 
