@@ -84,6 +84,8 @@ class QRImage(commands.Cog):
         )
         save_object_json(objects, config["object_output_path"])
         render_qr_preview(matrix, config["preview_output_path"], object_type=obj_type)
+
+        # Always generate ZIP with only JSON included
         create_qr_zip(
             config["object_output_path"],
             config["preview_output_path"],
