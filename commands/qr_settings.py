@@ -107,7 +107,7 @@ class ObjectAdjustModal(discord.ui.Modal, title="Adjust QR Settings"):
 
         update_guild_config(guild_id, self.config)
         await interaction.response.send_message(
-            f"✅ Settings updated:\n• Object: `{obj}`\n• Spacing: `{spacing_val}`\n• Scale: `{scale_val}`\n
+            f"✅ Settings updated:\n• Object: `{obj}`\n• Spacing: `{spacing_val}`\n• Scale: `{scale_val}`"
 Now rerun `/qrbuild` or `/qrimage` to apply these changes.", ephemeral=True
         )
 
