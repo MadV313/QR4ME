@@ -52,6 +52,7 @@ class QRBuild(commands.Cog):
         guild_id = str(interaction.guild.id)
         config = get_guild_config(guild_id)
         obj_type = object_type.value
+        origin = config.get("origin_position", {"x": 0.0, "y": 0.0, "z": 0.0})
 
         # 🔁 Apply per-object overrides or fallback to global config
         overall_scale = overall_scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
@@ -64,7 +65,7 @@ class QRBuild(commands.Cog):
         objects = qr_to_object_list(
             matrix,
             obj_type,
-            config["origin_position"],
+            origin,
             config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0}),
             overall_scale,
             object_spacing
@@ -76,7 +77,7 @@ class QRBuild(commands.Cog):
         # Step 4: Render preview
         render_qr_preview(matrix, config["preview_output_path"], object_type=obj_type)
 
-        # Step 5: Always create zip (now JSON only)
+        # Step 5: Always create zip (only JSON inside)
         final_path = create_qr_zip(
             config["object_output_path"],
             config["preview_output_path"],
@@ -106,7 +107,8 @@ class QRBuild(commands.Cog):
                 f"• Size: {len(matrix)}x{len(matrix[0])}\n"
                 f"• Objects: {len(objects)}\n"
                 f"• Type: `{obj_type}`\n"
-                f"• Scale: `{overall_scale}` | Spacing: `{object_spacing}`"
+                f"• Scale: `{overall_scale}` | Spacing: `{object_spacing}`\n"
+                f"• Origin: X: {origin['x']}, Y: {origin['y']}, Z: {origin['z']}"
             ),
             files=[file_to_send, preview_file]
         )
