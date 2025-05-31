@@ -28,12 +28,12 @@ def load_or_init_guild_config(guild_id: int, invoking_user_id: int) -> dict:
     new_config = {
         "admin_roles": [],
         "permitted_users": [str(invoking_user_id)],
-        "origin_position": { "x": 5000.0, "y": 0.0, "z": 5000.0 },
+        "origin_position": {"x": 5000.0, "y": 0.0, "z": 5000.0},
         "preview_output_path": f"previews/{guild_id}_preview.png",
         "object_output_path": f"data/objects_{guild_id}.json",
         "zip_output_path": f"outputs/{guild_id}_qr.zip",
         "admin_channel_id": None,
-        "export_as_zip": True  # ✅ NEW toggle added
+        "export_as_zip": True  # ✅ Toggle for default ZIP output
     }
 
     with open(path, "w") as f:
