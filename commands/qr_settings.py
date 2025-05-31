@@ -40,6 +40,7 @@ class QRSettings(commands.Cog):
         obj_type = config.get("default_object", "SmallProtectiveCase")
         spacing = OBJECT_SIZE_ADJUSTMENTS.get(obj_type, 1.0)
         box_size = config.get("defaultScale", 1.0)
+        origin = config.get("origin_position", {"x": 5000, "y": 0, "z": 5000})
 
         embed = discord.Embed(
             title="🔧 Current QR Object Settings",
@@ -48,6 +49,11 @@ class QRSettings(commands.Cog):
         embed.add_field(name="Object Type", value=f"`{obj_type}`", inline=True)
         embed.add_field(name="Spacing Multiplier", value=f"`{spacing}`", inline=True)
         embed.add_field(name="Scale (Box Size)", value=f"`{box_size}`", inline=True)
+        embed.add_field(
+            name="Origin Position",
+            value=f"`X: {origin.get('x', 0)} | Y: {origin.get('y', 0)} | Z: {origin.get('z', 0)}`",
+            inline=False
+        )
         embed.set_footer(text="You can adjust these values or confirm to regenerate with current settings.")
 
         view = ObjectInfoView(config=config, interaction=interaction)
@@ -79,7 +85,7 @@ class ObjectInfoView(discord.ui.View):
     @discord.ui.button(label="✅ Accept & Rebuild", style=discord.ButtonStyle.green)
     async def accept_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("🔁 Rebuilding QR code with current settings... (Trigger logic here)", ephemeral=True)
-        # Trigger your rebuild logic here using qrbuild or stored config
+        # 🔧 You can trigger qrbuild here if wired via backend
 
     @discord.ui.button(label="⚙️ Adjust Settings", style=discord.ButtonStyle.blurple)
     async def adjust_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -107,8 +113,12 @@ class ObjectAdjustModal(discord.ui.Modal, title="Adjust QR Settings"):
 
         update_guild_config(guild_id, self.config)
         await interaction.response.send_message(
-            f"✅ Settings updated:\n• Object: `{obj}`\n• Spacing: `{spacing_val}`\n• Scale: `{scale_val}`"
-Now rerun `/qrbuild` or `/qrimage` to apply these changes.", ephemeral=True
+            f"✅ Settings updated:\n"
+            f"• Object: `{obj}`\n"
+            f"• Spacing: `{spacing_val}`\n"
+            f"• Scale: `{scale_val}`\n\n"
+            f"Now rerun `/qrbuild` or `/qrimage` to apply these changes.",
+            ephemeral=True
         )
 
 async def setup(bot):
