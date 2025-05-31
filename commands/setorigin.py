@@ -12,13 +12,28 @@ def update_origin_in_config(guild_id: str, x: float, y: float, z: float):
     os.makedirs(CONFIG_FOLDER, exist_ok=True)
     config_path = os.path.join(CONFIG_FOLDER, f"config_{guild_id}.json")
 
+    # ✅ If config doesn't exist, create it with default structure
     if not os.path.exists(config_path):
-        raise FileNotFoundError("Config file not found. Please rejoin the server or contact an admin.")
-
-    with open(config_path, "r") as f:
-        config = json.load(f)
-
-    config["origin_position"] = {"x": x, "y": y, "z": z}
+        config = {
+            "admin_roles": [],
+            "permitted_users": [],
+            "origin_position": {"x": x, "y": y, "z": z},
+            "preview_output_path": f"previews/{guild_id}_preview.png",
+            "object_output_path": f"data/objects_{guild_id}.json",
+            "zip_output_path": f"outputs/{guild_id}_qr.zip",
+            "admin_channel_id": None,
+            "originOffset": {"x": 0.0, "y": 0.0, "z": 0.0},
+            "defaultScale": 0.5,
+            "defaultSpacing": 1.0,
+            "selected_map": "Chernarus",
+            "map_coordinates": {"x": x, "y": y, "z": z},
+            "custom_spacing": {},
+            "custom_scale": {}
+        }
+    else:
+        with open(config_path, "r") as f:
+            config = json.load(f)
+        config["origin_position"] = {"x": x, "y": y, "z": z}
 
     with open(config_path, "w") as f:
         json.dump(config, f, indent=2)
