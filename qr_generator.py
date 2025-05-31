@@ -84,10 +84,20 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
 
     return objects
 
-def save_object_json(object_list: list, output_path: str):
+def save_object_json(object_list: list, output_path: str, map_name: str = "Unknown", origin: dict = None):
+    """
+    Save the object layout to JSON, including map + position metadata.
+    """
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    json_data = {
+        "map": map_name,
+        "position": origin or {"x": 0, "y": 0, "z": 0},
+        "objects": object_list
+    }
+
     with open(output_path, "w") as f:
-        json.dump({"Objects": object_list}, f, indent=2)
+        json.dump(json_data, f, indent=2)
 
 # ✅ Manual test
 if __name__ == "__main__":
@@ -102,5 +112,5 @@ if __name__ == "__main__":
         CONFIG.get("defaultScale", 0.5),
         CONFIG.get("defaultSpacing", 1.0)
     )
-    save_object_json(object_list, CONFIG["object_output_path"])
+    save_object_json(object_list, CONFIG["object_output_path"], CONFIG.get("selected_map", "Chernarus"), CONFIG["origin_position"])
     print(f"Generated {len(object_list)} objects including anchor.")
