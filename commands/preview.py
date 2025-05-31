@@ -3,9 +3,9 @@ from discord.ext import commands
 from discord import app_commands
 import os
 
-from config import CONFIG
+from utils.config_utils import get_guild_config
 from utils.channel_utils import get_channel_id
-from utils.permissions import is_admin_user  # ✅ Permission check
+from utils.permissions import is_admin_user
 
 class Preview(commands.Cog):
     def __init__(self, bot):
@@ -13,15 +13,16 @@ class Preview(commands.Cog):
 
     @app_commands.command(name="preview", description="Re-send the latest generated QR build preview and zip")
     async def preview(self, interaction: discord.Interaction):
-        # Permission check
         if not is_admin_user(interaction):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
             return
 
-        preview_path = CONFIG["preview_output_path"]
-        zip_path = CONFIG["zip_output_path"]
+        guild_id = str(interaction.guild.id)
+        config = get_guild_config(guild_id)
 
-        # Check if files exist
+        preview_path = config["preview_output_path"]
+        zip_path = config["zip_output_path"]
+
         if not os.path.exists(preview_path) or not os.path.exists(zip_path):
             await interaction.response.send_message(
                 "❌ No preview available yet. Please run `/qrbuild` or `/qrimage` first.",
@@ -29,15 +30,13 @@ class Preview(commands.Cog):
             )
             return
 
-        # Resolve dynamic or fallback gallery channel
-        channel_id = get_channel_id("gallery", str(interaction.guild.id)) or CONFIG["admin_channel_id"]
-        channel = self.bot.get_channel(int(channel_id))
+        channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
+        channel = self.bot.get_channel(int(channel_id)) if channel_id else None
 
         if not channel:
             await interaction.response.send_message("❌ Gallery channel not found.", ephemeral=True)
             return
 
-        # Send preview + zip to target channel
         await channel.send(
             content="📦 **Reposted Preview + ZIP**",
             files=[
