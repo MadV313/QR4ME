@@ -120,7 +120,8 @@ class ObjectInfoView(discord.ui.View):
                     f"• Size: {len(matrix)}x{len(matrix[0])}\n"
                     f"• Objects: {len(objects)}\n"
                     f"• Type: `{obj}`\n"
-                    f"• Scale: `{scale}` | Spacing: `{spacing}`"
+                    f"• Scale: `{scale}` | Spacing: `{spacing}`\n"
+                    f"• Origin: X: {origin['x']}, Y: {origin['y']}, Z: {origin['z']}"
                 ),
                 files=[
                     discord.File(config["zip_output_path"]),
@@ -134,15 +135,7 @@ class ObjectInfoView(discord.ui.View):
         await interaction.response.send_modal(ObjectAdjustModal(config=self.config))
 
 class ObjectAdjustModal(discord.ui.Modal, title="Adjust QR Settings"):
-    object_type = discord.ui.Select(
-        placeholder="Select Object Type",
-        min_values=1,
-        max_values=1,
-        options=[
-            discord.SelectOption(label=obj, value=obj)
-            for obj in OBJECT_CHOICES
-        ]
-    )
+    object_type = discord.ui.TextInput(label="Object Type", placeholder="e.g. JerryCan", required=True)
     spacing = discord.ui.TextInput(label="Spacing Multiplier (0.1–2.0)", placeholder="e.g. 1.0", required=False)
     scale = discord.ui.TextInput(label="Scale (Box Size)", placeholder="e.g. 1.0", required=False)
 
@@ -153,7 +146,7 @@ class ObjectAdjustModal(discord.ui.Modal, title="Adjust QR Settings"):
     async def on_submit(self, interaction: discord.Interaction):
         guild_id = str(interaction.guild.id)
 
-        obj = self.object_type.values[0]
+        obj = self.object_type.value.strip()
         spacing_val = float(self.spacing.value.strip()) if self.spacing.value else 1.0
         scale_val = float(self.scale.value.strip()) if self.scale.value else 1.0
 
