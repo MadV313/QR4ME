@@ -1,15 +1,22 @@
 import zipfile
 import os
+import shutil
 
-def create_qr_zip(object_json_path: str, preview_image_path: str, zip_output_path: str, extra_text: str = ""):
+def create_qr_zip(object_json_path: str, preview_image_path: str, zip_output_path: str, extra_text: str = "", export_mode: str = "zip") -> str:
     """
-    Packages the generated QR layout files into a zip archive.
-    Includes:
-      - objects.json
-      - qr_preview.png
-      - README.txt (summary)
+    Packages the generated QR layout files.
+
+    Modes:
+      - zip: generates a .zip with objects.json, preview, and README.txt
+      - json: returns path to just the object_json_path
+
+    Returns path to the final file to send.
     """
     os.makedirs(os.path.dirname(zip_output_path), exist_ok=True)
+
+    if export_mode == "json":
+        print(f"[zip_packager] Skipping zip — returning raw JSON: {object_json_path}")
+        return object_json_path
 
     readme_content = f"""
 QR Code Build Summary
@@ -20,15 +27,14 @@ QR Code Build Summary
 {extra_text.strip()}
 """.strip()
 
-    # Write README.txt to the same output directory as the zip
     readme_path = os.path.join(os.path.dirname(zip_output_path), "README.txt")
     with open(readme_path, "w") as f:
         f.write(readme_content)
 
-    # Create the ZIP package
     with zipfile.ZipFile(zip_output_path, 'w') as zipf:
         zipf.write(object_json_path, arcname="objects.json")
         zipf.write(preview_image_path, arcname="qr_preview.png")
         zipf.write(readme_path, arcname="README.txt")
 
-    print(f"Created zip: {zip_output_path}")
+    print(f"[zip_packager] ✅ Created zip: {zip_output_path}")
+    return zip_output_path
