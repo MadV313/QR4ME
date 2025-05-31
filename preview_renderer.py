@@ -1,15 +1,17 @@
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 import os
 
-def render_qr_preview(matrix: list, output_path: str, scale: int = 64, border: int = 2, object_type: str = "SmallProtectiveCase"):
+def render_qr_preview(matrix: list, output_path: str, scale: int = 64, border: int = 2, object_type: str = "SmallProtectiveCase", spacing: float = 1.0):
     """
     Renders a PNG preview of the QR object layout using thumbnails with grid overlay.
 
+    Parameters:
     - matrix: 2D list from generate_qr_matrix()
     - output_path: where to save the image (can be per-guild)
     - scale: pixel size per QR unit (default 64px for thumbnails)
     - border: empty border (in matrix units)
     - object_type: name of the DayZ object (matches thumbnail PNG)
+    - spacing: shown in preview text for visual confirmation
     """
     rows = len(matrix)
     cols = len(matrix[0])
@@ -26,7 +28,7 @@ def render_qr_preview(matrix: list, output_path: str, scale: int = 64, border: i
     try:
         thumb = Image.open(thumb_path).convert("RGBA").resize((scale, scale))
 
-        # Special case: Rotate DoorTestKit 90 degrees to stand upright
+        # Optional: rotate certain objects for clarity
         if object_type.lower() == "doortestkit":
             thumb = thumb.rotate(90, expand=True)
 
@@ -43,6 +45,15 @@ def render_qr_preview(matrix: list, output_path: str, scale: int = 64, border: i
 
             # Draw a light border for each cell
             draw.rectangle([x, y, x + scale, y + scale], outline="#cccccc", width=1)
+
+    # Optional footer text for object type and spacing
+    try:
+        font = ImageFont.truetype("arial.ttf", 14)
+    except:
+        font = ImageFont.load_default()
+
+    label_text = f"Object: {object_type} | Spacing: {spacing}"
+    draw.text((10, img_height - 24), label_text, fill="black", font=font)
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     img.save(output_path)
