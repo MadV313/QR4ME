@@ -77,13 +77,11 @@ class AdjustQRSettings(discord.ui.View):
         self.config = config
         self.guild_id = guild_id
 
-        # Current values from config
         current_obj = config.get("default_object", "SmallProtectiveCase")
         current_spacing = str(config.get("custom_spacing", {}).get(current_obj, OBJECT_SIZE_ADJUSTMENTS.get(current_obj, 1.0)))
         current_scale = str(config.get("custom_scale", {}).get(current_obj, config.get("defaultScale", 0.5)))
         origin = config.get("origin_position", {"x": 5000.0, "y": 0.0, "z": 5000.0})
 
-        # Dropdown to select object type
         self.object_select = discord.ui.Select(
             placeholder="Select Object Type",
             options=OBJECT_OPTIONS,
@@ -92,28 +90,15 @@ class AdjustQRSettings(discord.ui.View):
         self.object_select.callback = self.select_object
         self.add_item(self.object_select)
 
-        # Pre-filled editable fields
-        self.spacing_input = discord.ui.TextInput(
-            label="Spacing (e.g. 1.0)", default=current_spacing, required=False
-        )
-        self.scale_input = discord.ui.TextInput(
-            label="Scale (e.g. 0.5)", default=current_scale, required=False
-        )
-        self.x_input = discord.ui.TextInput(
-            label="Origin X", default=str(origin.get("x", 5000.0)), required=False
-        )
-        self.y_input = discord.ui.TextInput(
-            label="Origin Y", default=str(origin.get("y", 0.0)), required=False
-        )
-        self.z_input = discord.ui.TextInput(
-            label="Origin Z", default=str(origin.get("z", 5000.0)), required=False
-        )
+        self.spacing_input = discord.ui.TextInput(label="Spacing (e.g. 1.0)", default=current_spacing, required=False)
+        self.scale_input = discord.ui.TextInput(label="Scale (e.g. 0.5)", default=current_scale, required=False)
+        self.x_input = discord.ui.TextInput(label="Origin X", default=str(origin.get("x", 5000.0)), required=False)
+        self.y_input = discord.ui.TextInput(label="Origin Y", default=str(origin.get("y", 0.0)), required=False)
+        self.z_input = discord.ui.TextInput(label="Origin Z", default=str(origin.get("z", 5000.0)), required=False)
 
-        # Add text fields to view
         for field in [self.spacing_input, self.scale_input, self.x_input, self.y_input, self.z_input]:
             self.add_item(field)
 
-        # Submit button
         self.add_item(SubmitButton(self))
 
     async def select_object(self, interaction: discord.Interaction):
