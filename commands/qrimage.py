@@ -54,6 +54,7 @@ class QRImage(commands.Cog):
         obj_type = object_type.value
         guild_id = str(interaction.guild.id)
         config = get_guild_config(guild_id)
+        origin = config.get("origin_position", {"x": 0.0, "y": 0.0, "z": 0.0})
 
         # 🔁 Apply per-object overrides or fallback to global config
         scale = scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
@@ -77,7 +78,7 @@ class QRImage(commands.Cog):
         objects = qr_to_object_list(
             matrix,
             obj_type,
-            config["origin_position"],
+            origin,
             config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0}),
             scale,
             object_spacing
@@ -113,7 +114,8 @@ class QRImage(commands.Cog):
                 f"• Size: {len(matrix)}x{len(matrix[0])}\n"
                 f"• Objects: {len(objects)}\n"
                 f"• Type: `{obj_type}`\n"
-                f"• Scale: `{scale}` | Spacing: `{object_spacing}`"
+                f"• Scale: `{scale}` | Spacing: `{object_spacing}`\n"
+                f"• Origin: X: {origin['x']}, Y: {origin['y']}, Z: {origin['z']}"
             ),
             files=[
                 discord.File(config["zip_output_path"]),
