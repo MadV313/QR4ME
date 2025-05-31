@@ -6,12 +6,12 @@ import cv2
 import numpy as np
 from pyzbar.pyzbar import decode
 
-from utils.config_utils import get_guild_config  # ✅ Multi-server support
+from utils.config_utils import get_guild_config
 from qr_generator import generate_qr_matrix, qr_to_object_list, save_object_json
 from preview_renderer import render_qr_preview
 from zip_packager import create_qr_zip
 from utils.channel_utils import get_channel_id
-from utils.permissions import is_admin_user  # ✅ Centralized admin check
+from utils.permissions import is_admin_user
 
 class QRImage(commands.Cog):
     def __init__(self, bot):
@@ -20,8 +20,8 @@ class QRImage(commands.Cog):
     @app_commands.command(name="qrimage", description="Upload a QR code image to generate a DayZ object layout")
     @app_commands.describe(
         image="Upload a PNG or JPG of a QR code",
-        scale="Overall object scale (default 0.5)",
-        object_spacing="Spacing between objects (default 1.0)",
+        scale="Overall object scale (default 0.5 or overridden per object)",
+        object_spacing="Spacing between objects (default 1.0 or overridden per object)",
         object_type="Choose the object to use for QR layout"
     )
     @app_commands.choices(
@@ -43,8 +43,8 @@ class QRImage(commands.Cog):
         interaction: discord.Interaction,
         image: discord.Attachment,
         object_type: app_commands.Choice[str],
-        scale: float = 0.5,
-        object_spacing: float = 1.0
+        scale: float = None,
+        object_spacing: float = None
     ):
         if not is_admin_user(interaction):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
@@ -54,6 +54,10 @@ class QRImage(commands.Cog):
         obj_type = object_type.value
         guild_id = str(interaction.guild.id)
         config = get_guild_config(guild_id)
+
+        # 🔁 Apply per-object overrides or fallback to global config
+        scale = scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
+        object_spacing = object_spacing or config.get("custom_spacing", {}).get(obj_type, config.get("defaultSpacing", 1.0))
 
         # Step 1: Download image
         img_bytes = await image.read()
@@ -92,7 +96,7 @@ class QRImage(commands.Cog):
             )
         )
 
-        # Step 4: Send results to assigned gallery/admin channel
+        # Step 4: Send results to gallery or fallback channel
         channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
         channel = self.bot.get_channel(int(channel_id)) if channel_id else None
 
