@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 import os
 
-from utils.config_utils import get_guild_config
+from utils.config_utils import get_guild_config, save_guild_config
 from qr_generator import generate_qr_matrix, qr_to_object_list, save_object_json
 from preview_renderer import render_qr_preview
 from zip_packager import create_qr_zip
@@ -54,14 +54,14 @@ class QRBuild(commands.Cog):
         obj_type = object_type.value
         origin = config.get("origin_position", {"x": 0.0, "y": 0.0, "z": 0.0})
 
-        # 🔁 Apply per-object overrides or fallback to global config
+        # 🔁 Use stored or fallback config values
         overall_scale = overall_scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
         object_spacing = object_spacing or config.get("custom_spacing", {}).get(obj_type, config.get("defaultSpacing", 1.0))
 
         # Step 1: Generate QR matrix
         matrix = generate_qr_matrix(text)
 
-        # Step 2: Generate object list using scale + spacing
+        # Step 2: Generate object list
         objects = qr_to_object_list(
             matrix,
             obj_type,
@@ -71,13 +71,20 @@ class QRBuild(commands.Cog):
             object_spacing
         )
 
-        # Step 3: Save object JSON
+        # Step 3: Save JSON
         save_object_json(objects, config["object_output_path"])
 
-        # Step 4: Render preview
+        # Step 4: Preview render
         render_qr_preview(matrix, config["preview_output_path"], object_type=obj_type)
 
-        # Step 5: Always create zip (only JSON inside)
+        # Step 5: Save updated config state
+        config["default_object"] = obj_type
+        config["defaultScale"] = overall_scale
+        config.setdefault("custom_spacing", {})[obj_type] = object_spacing
+        config["last_qr_data"] = text
+        save_guild_config(guild_id, config)
+
+        # Step 6: ZIP creation
         final_path = create_qr_zip(
             config["object_output_path"],
             config["preview_output_path"],
@@ -90,16 +97,13 @@ class QRBuild(commands.Cog):
             )
         )
 
-        # Step 6: Send to gallery or fallback admin channel
+        # Step 7: Send to gallery/admin channel
         channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
         channel = self.bot.get_channel(int(channel_id)) if channel_id else None
 
         if not channel:
             await interaction.followup.send("❌ Could not find configured gallery channel.", ephemeral=True)
             return
-
-        file_to_send = discord.File(final_path)
-        preview_file = discord.File(config["preview_output_path"])
 
         await channel.send(
             content=(
@@ -110,7 +114,10 @@ class QRBuild(commands.Cog):
                 f"• Scale: `{overall_scale}` | Spacing: `{object_spacing}`\n"
                 f"• Origin: X: {origin['x']}, Y: {origin['y']}, Z: {origin['z']}"
             ),
-            files=[file_to_send, preview_file]
+            files=[
+                discord.File(final_path),
+                discord.File(config["preview_output_path"])
+            ]
         )
 
         await interaction.followup.send("✅ QR build generated and posted in gallery channel.", ephemeral=True)
