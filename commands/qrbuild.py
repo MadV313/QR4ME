@@ -31,6 +31,7 @@ class QRBuild(commands.Cog):
             app_commands.Choice(name="Cooking Pot", value="CookingPot"),
             app_commands.Choice(name="Metal Wire", value="MetalWire"),
             app_commands.Choice(name="Armband (Black)", value="Armband_Black"),
+            app_commands.Choice(name="Jerry Can", value="JerryCan"),
             app_commands.Choice(name="Box Wooden", value="BoxWooden"),
         ],
         export_mode=[
