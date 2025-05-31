@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 from pyzbar.pyzbar import decode
 
-from utils.config_utils import get_guild_config
+from utils.config_utils import get_guild_config, save_guild_config
 from qr_generator import generate_qr_matrix, qr_to_object_list, save_object_json
 from preview_renderer import render_qr_preview
 from zip_packager import create_qr_zip
@@ -83,10 +83,21 @@ class QRImage(commands.Cog):
             scale,
             object_spacing
         )
+
+        # Step 4: Save object JSON
         save_object_json(objects, config["object_output_path"])
+
+        # Step 5: Render preview
         render_qr_preview(matrix, config["preview_output_path"], object_type=obj_type)
 
-        # Always generate ZIP with only JSON included
+        # Step 6: Update config to track settings
+        config["default_object"] = obj_type
+        config["defaultScale"] = scale
+        config.setdefault("custom_spacing", {})[obj_type] = object_spacing
+        config["last_qr_data"] = qr_text
+        save_guild_config(guild_id, config)
+
+        # Step 7: Create zip with only JSON
         create_qr_zip(
             config["object_output_path"],
             config["preview_output_path"],
@@ -99,7 +110,7 @@ class QRImage(commands.Cog):
             )
         )
 
-        # Step 4: Send results to gallery or fallback channel
+        # Step 8: Post to gallery or fallback admin channel
         channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
         channel = self.bot.get_channel(int(channel_id)) if channel_id else None
 
