@@ -44,3 +44,20 @@ def get_guild_config(guild_id: int) -> dict:
             json.dump(all_configs, f, indent=2)
 
     return config
+
+def save_guild_config(guild_id: int, updated_config: dict) -> None:
+    """
+    Save the updated config dictionary for a guild back to the config file.
+    """
+    os.makedirs("data", exist_ok=True)
+    guild_id_str = str(guild_id)
+
+    try:
+        with open(CONFIGS_FILE, "r") as f:
+            all_configs = json.load(f)
+    except FileNotFoundError:
+        all_configs = {}
+
+    all_configs[guild_id_str] = updated_config
+    with open(CONFIGS_FILE, "w") as f:
+        json.dump(all_configs, f, indent=2)
