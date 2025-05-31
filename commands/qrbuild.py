@@ -17,7 +17,8 @@ class QRBuild(commands.Cog):
     @app_commands.command(name="qrbuild", description="Convert text into a DayZ object QR layout")
     @app_commands.describe(
         text="The text or URL to encode as a QR code",
-        scale="Spacing between objects (default 1.0)",
+        overall_scale="Overall object scale multiplier (default 0.5)",
+        object_spacing="Spacing between objects (default 1.0)",
         object_type="Choose the object to use for QR layout",
         export_mode="Choose file output type: .zip (default) or just .json"
     )
@@ -44,7 +45,8 @@ class QRBuild(commands.Cog):
         interaction: discord.Interaction,
         text: str,
         object_type: app_commands.Choice[str],
-        scale: float = 1.0,
+        overall_scale: float = 0.5,
+        object_spacing: float = 1.0,
         export_mode: app_commands.Choice[str] = None
     ):
         if not is_admin_user(interaction):
@@ -61,13 +63,14 @@ class QRBuild(commands.Cog):
         # Step 1: Generate QR matrix
         matrix = generate_qr_matrix(text)
 
-        # Step 2: Generate object list with full config support
+        # Step 2: Generate object list using scale + spacing
         objects = qr_to_object_list(
             matrix,
             obj_type,
             config["origin_position"],
-            config.get("originOffset", {"x": 0, "y": 0, "z": 0}),
-            scale if scale else config.get("defaultScale", 0.5)
+            config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0}),
+            overall_scale,
+            object_spacing
         )
 
         # Step 3: Save object JSON
@@ -81,7 +84,12 @@ class QRBuild(commands.Cog):
             config["object_output_path"],
             config["preview_output_path"],
             config["zip_output_path"],
-            extra_text=f"QR Size: {len(matrix)}x{len(matrix[0])}\nTotal Objects: {len(objects)}\nObject Used: {obj_type}",
+            extra_text=(
+                f"QR Size: {len(matrix)}x{len(matrix[0])}\n"
+                f"Total Objects: {len(objects)}\n"
+                f"Object Used: {obj_type}\n"
+                f"Scale: {overall_scale} | Spacing: {object_spacing}"
+            ),
             export_mode=mode
         )
 
@@ -97,7 +105,13 @@ class QRBuild(commands.Cog):
         preview_file = discord.File(config["preview_output_path"]) if mode == "zip" else None
 
         await channel.send(
-            content=f"🧱 **QR Build Complete**\n• Size: {len(matrix)}x{len(matrix[0])}\n• Objects: {len(objects)}\n• Type: `{obj_type}`",
+            content=(
+                f"🧱 **QR Build Complete**\n"
+                f"• Size: {len(matrix)}x{len(matrix[0])}\n"
+                f"• Objects: {len(objects)}\n"
+                f"• Type: `{obj_type}`\n"
+                f"• Scale: `{overall_scale}` | Spacing: `{object_spacing}`"
+            ),
             files=[file for file in [file_to_send, preview_file] if file]
         )
 
