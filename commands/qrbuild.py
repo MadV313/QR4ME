@@ -61,8 +61,14 @@ class QRBuild(commands.Cog):
         # Step 1: Generate QR matrix
         matrix = generate_qr_matrix(text)
 
-        # Step 2: Generate object list
-        objects = qr_to_object_list(matrix, obj_type, config["origin_position"], scale)
+        # Step 2: Generate object list with full config support
+        objects = qr_to_object_list(
+            matrix,
+            obj_type,
+            config["origin_position"],
+            config.get("originOffset", {"x": 0, "y": 0, "z": 0}),
+            scale if scale else config.get("defaultScale", 0.5)
+        )
 
         # Step 3: Save object JSON
         save_object_json(objects, config["object_output_path"])
