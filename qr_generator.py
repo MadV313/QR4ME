@@ -12,7 +12,8 @@ OBJECT_CLASS_MAP = {
     "MetalWire": "MetalWire",
     "WoodenCrate": "WoodenCrate",
     "BoxWooden": "StaticObj_Misc_BoxWooden",
-    "Armband_Black": "Armband_Black"
+    "Armband_Black": "Armband_Black",
+    "Jerrycan": "CanisterGasoline"
 }
 
 # ✅ Optional spacing tweaks per object
@@ -25,7 +26,8 @@ OBJECT_SIZE_ADJUSTMENTS = {
     "MetalWire": 0.6,
     "ImprovisedContainer": 1.0,
     "WoodenCrate": 1.1,
-    "Armband_Black": 0.5
+    "Armband_Black": 0.5,
+    "Jerrycan": 1.0
 }
 
 def generate_qr_matrix(data: str, box_size: int = 1) -> list:
