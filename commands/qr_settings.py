@@ -23,116 +23,136 @@ OBJECT_SIZE_ADJUSTMENTS = {
     "BoxWooden": 1.0
 }
 
-MAP_CHOICES = [
-    app_commands.Choice(name="Chernarus", value="Chernarus"),
-    app_commands.Choice(name="Livonia", value="Livonia"),
-    app_commands.Choice(name="Sakhal", value="Sakhal")
+OBJECT_OPTIONS = [
+    discord.SelectOption(label=name, value=name) for name in OBJECT_SIZE_ADJUSTMENTS.keys()
 ]
 
 class QRSettings(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="object_info", description="View current QR object settings and adjust if needed")
+    @app_commands.command(name="object_info", description="View current QR object settings and optionally rebuild")
     async def object_info(self, interaction: discord.Interaction):
         if not is_admin_user(interaction):
-            await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
+            await interaction.response.send_message("❌ You do not have permission.", ephemeral=True)
             return
 
         guild_id = str(interaction.guild.id)
         config = get_guild_config(guild_id)
-        obj_type = config.get("default_object", "SmallProtectiveCase")
-        spacing = config.get("custom_spacing", {}).get(obj_type, OBJECT_SIZE_ADJUSTMENTS.get(obj_type, 1.0))
-        box_size = config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 1.0))
-        origin = config.get("origin_position", {"x": 5000, "y": 0, "z": 5000})
+        obj = config.get("default_object", "SmallProtectiveCase")
+        spacing = config.get("custom_spacing", {}).get(obj, OBJECT_SIZE_ADJUSTMENTS.get(obj, 1.0))
+        scale = config.get("custom_scale", {}).get(obj, config.get("defaultScale", 0.5))
+        origin = config.get("origin_position", {"x": 5000.0, "y": 0.0, "z": 5000.0})
 
         embed = discord.Embed(title="🔧 Current QR Object Settings", color=0x00ffff)
-        embed.add_field(name="Object Type", value=f"`{obj_type}`", inline=True)
+        embed.add_field(name="Object Type", value=f"`{obj}`", inline=True)
         embed.add_field(name="Spacing Multiplier", value=f"`{spacing}`", inline=True)
-        embed.add_field(name="Scale (Box Size)", value=f"`{box_size}`", inline=True)
-        embed.add_field(
-            name="Origin Position",
-            value=f"`X: {origin.get('x', 0)} | Y: {origin.get('y', 0)} | Z: {origin.get('z', 0)}`",
-            inline=False
-        )
-        embed.set_footer(text="You can adjust these values below. Your changes will trigger a new build.")
+        embed.add_field(name="Scale (Box Size)", value=f"`{scale}`", inline=True)
+        embed.add_field(name="Origin", value=f"`X: {origin['x']}` | `Y: {origin['y']}` | `Z: {origin['z']}`", inline=False)
 
-        view = ObjectInfoView(config=config, interaction=interaction)
+        view = ObjectInfoButtons(config=config, guild_id=guild_id)
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
-class ObjectInfoView(discord.ui.View):
-    def __init__(self, config, interaction):
+class ObjectInfoButtons(discord.ui.View):
+    def __init__(self, config, guild_id):
         super().__init__(timeout=60)
         self.config = config
-        self.interaction = interaction
+        self.guild_id = guild_id
 
-    @discord.ui.button(label="⚙️ Adjust + Rebuild", style=discord.ButtonStyle.green)
-    async def adjust_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(ObjectAdjustModal(config=self.config))
-
-class ObjectAdjustModal(discord.ui.Modal, title="Adjust QR Settings"):
-    object_type = discord.ui.TextInput(label="Object Type", placeholder="e.g. JerryCan", required=True)
-    spacing = discord.ui.TextInput(label="Spacing Multiplier", placeholder="e.g. 1.0", required=False)
-    scale = discord.ui.TextInput(label="Scale (Box Size)", placeholder="e.g. 0.5", required=False)
-    origin_x = discord.ui.TextInput(label="Origin X", placeholder="e.g. 5000.0", required=False)
-    origin_y = discord.ui.TextInput(label="Origin Y", placeholder="e.g. 0.0", required=False)
-    origin_z = discord.ui.TextInput(label="Origin Z", placeholder="e.g. 5000.0", required=False)
-
-    def __init__(self, config):
-        super().__init__()
-        self.config = config
-
-    async def on_submit(self, interaction: discord.Interaction):
-        guild_id = str(interaction.guild.id)
-
-        obj = self.object_type.value.strip()
-        spacing_val = float(self.spacing.value.strip()) if self.spacing.value else OBJECT_SIZE_ADJUSTMENTS.get(obj, 1.0)
-        scale_val = float(self.scale.value.strip()) if self.scale.value else 1.0
-        x = float(self.origin_x.value.strip()) if self.origin_x.value else 5000.0
-        y = float(self.origin_y.value.strip()) if self.origin_y.value else 0.0
-        z = float(self.origin_z.value.strip()) if self.origin_z.value else 5000.0
-
-        # Update and save
-        self.config["default_object"] = obj
-        self.config.setdefault("custom_spacing", {})[obj] = spacing_val
-        self.config.setdefault("custom_scale", {})[obj] = scale_val
-        self.config["origin_position"] = {"x": x, "y": y, "z": z}
-        update_guild_config(guild_id, self.config)
-
-        # Rebuild logic
+    @discord.ui.button(label="✅ Approve + Rebuild", style=discord.ButtonStyle.green)
+    async def approve(self, interaction: discord.Interaction, button: discord.ui.Button):
         if "last_qr_data" not in self.config:
             await interaction.response.send_message("⚠️ No previous QR text found. Run `/qrbuild` or `/qrimage` first.", ephemeral=True)
             return
 
-        qr_text = self.config["last_qr_data"]
-        offset = self.config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0})
-        matrix = generate_qr_matrix(qr_text)
-        objects = qr_to_object_list(matrix, obj, {"x": x, "y": y, "z": z}, offset, scale_val, spacing_val)
-        save_object_json(objects, self.config["object_output_path"])
-        render_qr_preview(matrix, self.config["preview_output_path"], object_type=obj)
-        create_qr_zip(self.config["object_output_path"], self.config["preview_output_path"], self.config["zip_output_path"])
+        await handle_qr_rebuild(interaction, self.config, self.guild_id)
 
-        # Send to gallery
-        channel_id = get_channel_id("gallery", guild_id) or self.config.get("admin_channel_id")
-        channel = interaction.client.get_channel(int(channel_id)) if channel_id else None
+    @discord.ui.button(label="⚙️ Adjust Settings", style=discord.ButtonStyle.blurple)
+    async def adjust(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("🛠️ Adjust your QR settings below:", view=AdjustQRSettings(self.config, self.guild_id), ephemeral=True)
 
-        if channel:
-            await channel.send(
-                content=(
-                    f"🛠️ **QR Build Regenerated**\n"
-                    f"• Size: {len(matrix)}x{len(matrix[0])}\n"
-                    f"• Objects: {len(objects)}\n"
-                    f"• Type: `{obj}`\n"
-                    f"• Scale: `{scale_val}` | Spacing: `{spacing_val}`\n"
-                    f"• Origin: X: {x}, Y: {y}, Z: {z}"
-                ),
-                files=[
-                    discord.File(self.config["zip_output_path"]),
-                    discord.File(self.config["preview_output_path"])
-                ]
-            )
+class AdjustQRSettings(discord.ui.View):
+    def __init__(self, config, guild_id):
+        super().__init__(timeout=120)
+        self.config = config
+        self.guild_id = guild_id
 
-        await interaction.response.send_message("✅ Settings updated and QR rebuilt.", ephemeral=True)
+        self.object_select = discord.ui.Select(placeholder="Select Object Type", options=OBJECT_OPTIONS)
+        self.object_select.callback = self.select_object
+        self.add_item(self.object_select)
+
+        self.spacing_input = discord.ui.TextInput(label="Spacing (e.g. 1.0)", placeholder="Optional", required=False)
+        self.scale_input = discord.ui.TextInput(label="Scale (e.g. 0.5)", placeholder="Optional", required=False)
+        self.x_input = discord.ui.TextInput(label="Origin X", placeholder="e.g. 5000.0", required=False)
+        self.y_input = discord.ui.TextInput(label="Origin Y", placeholder="e.g. 0.0", required=False)
+        self.z_input = discord.ui.TextInput(label="Origin Z", placeholder="e.g. 5000.0", required=False)
+
+        self.add_item(SubmitButton(self))
+
+    async def select_object(self, interaction: discord.Interaction):
+        await interaction.response.send_message(f"Selected: `{self.object_select.values[0]}`. Now fill the remaining fields and press Submit.", ephemeral=True)
+
+class SubmitButton(discord.ui.Button):
+    def __init__(self, view):
+        super().__init__(label="Submit + Rebuild", style=discord.ButtonStyle.success)
+        self.custom_view = view
+
+    async def callback(self, interaction: discord.Interaction):
+        config = self.custom_view.config
+        guild_id = self.custom_view.guild_id
+
+        obj = self.custom_view.object_select.values[0]
+        spacing_val = float(self.custom_view.spacing_input.value) if self.custom_view.spacing_input.value else OBJECT_SIZE_ADJUSTMENTS.get(obj, 1.0)
+        scale_val = float(self.custom_view.scale_input.value) if self.custom_view.scale_input.value else 0.5
+        x = float(self.custom_view.x_input.value) if self.custom_view.x_input.value else 5000.0
+        y = float(self.custom_view.y_input.value) if self.custom_view.y_input.value else 0.0
+        z = float(self.custom_view.z_input.value) if self.custom_view.z_input.value else 5000.0
+
+        config["default_object"] = obj
+        config.setdefault("custom_spacing", {})[obj] = spacing_val
+        config.setdefault("custom_scale", {})[obj] = scale_val
+        config["origin_position"] = {"x": x, "y": y, "z": z}
+        update_guild_config(guild_id, config)
+
+        if "last_qr_data" not in config:
+            await interaction.response.send_message("⚠️ No previous QR text found. Run `/qrbuild` or `/qrimage` first.", ephemeral=True)
+            return
+
+        await handle_qr_rebuild(interaction, config, guild_id)
+
+async def handle_qr_rebuild(interaction: discord.Interaction, config: dict, guild_id: str):
+    qr_text = config["last_qr_data"]
+    obj = config.get("default_object", "SmallProtectiveCase")
+    scale = config.get("custom_scale", {}).get(obj, config.get("defaultScale", 0.5))
+    spacing = config.get("custom_spacing", {}).get(obj, config.get("defaultSpacing", 1.0))
+    origin = config.get("origin_position", {"x": 5000.0, "y": 0.0, "z": 5000.0})
+    offset = config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0})
+
+    matrix = generate_qr_matrix(qr_text)
+    objects = qr_to_object_list(matrix, obj, origin, offset, scale, spacing)
+    save_object_json(objects, config["object_output_path"])
+    render_qr_preview(matrix, config["preview_output_path"], object_type=obj)
+    create_qr_zip(config["object_output_path"], config["preview_output_path"], config["zip_output_path"])
+
+    channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
+    channel = interaction.client.get_channel(int(channel_id)) if channel_id else None
+
+    if channel:
+        await channel.send(
+            content=(
+                f"🧱 **QR Build Regenerated**\n"
+                f"• Size: {len(matrix)}x{len(matrix[0])}\n"
+                f"• Objects: {len(objects)}\n"
+                f"• Type: `{obj}`\n"
+                f"• Scale: `{scale}` | Spacing: `{spacing}`\n"
+                f"• Origin: X: {origin['x']}, Y: {origin['y']}, Z: {origin['z']}"
+            ),
+            files=[
+                discord.File(config["zip_output_path"]),
+                discord.File(config["preview_output_path"])
+            ]
+        )
+    await interaction.response.send_message("✅ Settings updated and QR rebuilt.", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(QRSettings(bot))
