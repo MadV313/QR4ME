@@ -84,10 +84,9 @@ class AdjustQRSettings(discord.ui.View):
 
         # Mark current object as default in the options list
         options = [
-            discord.SelectOption(label=name, value=name, default=(name == current_obj))
+            discord.SelectOption(label=name, value=name)
             for name in OBJECT_SIZE_ADJUSTMENTS.keys()
         ]
-
         self.object_select = discord.ui.Select(
             placeholder="Select Object Type",
             options=options
