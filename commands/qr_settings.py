@@ -226,6 +226,7 @@ async def handle_qr_rebuild(interaction: discord.Interaction, config: dict, guil
                 f"• Objects: {len(objects)}\n"
                 f"• Type: `{obj}`\n"
                 f"• Scale: `{scale}` | Spacing: `{spacing}`\n"
+                f"• Mirror Test Kit: `{'Enabled' if config.get('enable_mirror_test_kit') else 'Disabled'}`\n"
                 f"• Origin: X: {origin['x']}, Y: {origin['y']}, Z: {origin['z']}"
             ),
             files=[
