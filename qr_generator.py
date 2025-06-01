@@ -84,8 +84,8 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
                 obj = {
                     "name": resolved_type,
                     "pos": [x, offset_y, z],
-                    "ypr": [0.0, 0.0, 0.0],
-                    "scale": scale,
+                    "ypr": [106.25797271728516, -3.9915712402027737e-10, -1.56961490915819e-07],
+                    "scale": 0.04999890923500061,
                     "enableCEPersistency": 0,
                     "customString": ""
                 }
