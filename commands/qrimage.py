@@ -81,6 +81,7 @@ class QRImage(commands.Cog):
 
         # ✅ Mirror toggle fallback
         mirror_enabled = add_mirror or config.get("enable_mirror_test_kit", False)
+        config["enable_mirror_test_kit"] = mirror_enabled  # <-- THIS LINE ensures the setting persists
         if mirror_enabled:
             grid_width = len(matrix[0]) * object_spacing * scale
             grid_height = len(matrix) * object_spacing * scale
