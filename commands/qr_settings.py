@@ -11,7 +11,6 @@ from utils.channel_utils import get_channel_id
 
 OBJECT_SIZE_ADJUSTMENTS = {
     "SmallProtectiveCase": 1.0,
-    "SmallProtectorCase": 1.0,
     "DryBag_Black": 1.25,
     "PlasticBottle": 0.75,
     "CookingPot": 0.8,
