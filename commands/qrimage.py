@@ -59,40 +59,53 @@ class QRImage(commands.Cog):
         origin = config.get("origin_position", {"x": 0.0, "y": 0.0, "z": 0.0})
         offset = config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0})
 
-        # Fallback values
+        # Fallback or override values
         scale = scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
         object_spacing = object_spacing or config.get("custom_spacing", {}).get(obj_type, config.get("defaultSpacing", 1.0))
 
-        # Step 1: Decode the image
+        # Step 1: Decode QR from image
         img_bytes = await image.read()
         np_array = np.frombuffer(img_bytes, np.uint8)
         img = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
-
         decoded = decode(img)
+
         if not decoded:
             await interaction.followup.send("❌ Failed to decode QR code from the image.", ephemeral=True)
             return
 
         qr_text = decoded[0].data.decode("utf-8")
 
-        # Step 2: Build matrix and objects
+        # Step 2: Build QR matrix
         matrix = generate_qr_matrix(qr_text)
+
+        # Step 3: Generate object layout
         mirror_enabled = add_mirror or config.get("enable_mirror_test_kit", False)
         config["enable_mirror_test_kit"] = mirror_enabled
-        objects = qr_to_object_list(matrix, obj_type, origin, offset, scale, object_spacing, include_mirror_kit=mirror_enabled)
 
-        # Step 3: Save outputs
+        objects = qr_to_object_list(
+            matrix,
+            obj_type,
+            origin,
+            offset,
+            scale=scale,
+            spacing=object_spacing,
+            include_mirror_kit=mirror_enabled
+        )
+
+        # Step 4: Save object JSON and preview
         save_object_json(objects, config["object_output_path"])
         render_qr_preview(matrix, config["preview_output_path"], object_type=obj_type)
 
-        # Step 4: Save config
+        # Step 5: Save config updates
         config["default_object"] = obj_type
         config["defaultScale"] = scale
+        config["defaultSpacing"] = object_spacing
+        config.setdefault("custom_scale", {})[obj_type] = scale
         config.setdefault("custom_spacing", {})[obj_type] = object_spacing
         config["last_qr_data"] = qr_text
         save_guild_config(guild_id, config)
 
-        # Step 5: Send results to gallery
+        # Step 6: Post to gallery
         channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
         channel = self.bot.get_channel(int(channel_id)) if channel_id else None
 
