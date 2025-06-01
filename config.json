@@ -21,5 +21,7 @@
     "1173049392371085392"
   ],
 
-  "permitted_users": ["1291903774872567898"]
+  "permitted_users": ["1291903774872567898"],
+
+  "include_mirror_kit": false
 }
