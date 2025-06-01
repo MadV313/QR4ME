@@ -69,7 +69,41 @@ class ObjectInfoButtons(discord.ui.View):
             await interaction.response.send_message("⚠️ No previous QR text found. Run `/qrbuild` or `/qrimage` first.", ephemeral=True)
             return
 
-        await interaction.response.send_message("🛠️ Rebuilding with existing config values...", ephemeral=True)
+        await interaction.response.send_modal(QRSettingsModal(self.config, self.guild_id))
+
+class QRSettingsModal(discord.ui.Modal, title="Adjust QR Settings"):
+    def __init__(self, config, guild_id):
+        super().__init__()
+        self.config = config
+        self.guild_id = guild_id
+
+        obj = config.get("default_object", "SmallProtectiveCase")
+        spacing = config.get("custom_spacing", {}).get(obj, OBJECT_SIZE_ADJUSTMENTS.get(obj, 1.0))
+        scale = config.get("custom_scale", {}).get(obj, config.get("defaultScale", 0.5))
+        origin = config.get("origin_position", {"x": 5000.0, "y": 0.0, "z": 5000.0})
+
+        self.add_item(discord.ui.TextInput(label="Object Type", default=obj, required=True))
+        self.add_item(discord.ui.TextInput(label="Spacing", default=str(spacing), required=False))
+        self.add_item(discord.ui.TextInput(label="Scale", default=str(scale), required=False))
+        self.add_item(discord.ui.TextInput(label="Origin X", default=str(origin['x']), required=False))
+        self.add_item(discord.ui.TextInput(label="Origin Y", default=str(origin['y']), required=False))
+        self.add_item(discord.ui.TextInput(label="Origin Z", default=str(origin['z']), required=False))
+
+    async def on_submit(self, interaction: discord.Interaction):
+        obj = self.children[0].value
+        spacing = float(self.children[1].value or OBJECT_SIZE_ADJUSTMENTS.get(obj, 1.0))
+        scale = float(self.children[2].value or 0.5)
+        x = float(self.children[3].value or 5000.0)
+        y = float(self.children[4].value or 0.0)
+        z = float(self.children[5].value or 5000.0)
+
+        self.config["default_object"] = obj
+        self.config.setdefault("custom_spacing", {})[obj] = spacing
+        self.config.setdefault("custom_scale", {})[obj] = scale
+        self.config["origin_position"] = {"x": x, "y": y, "z": z}
+        update_guild_config(self.guild_id, self.config)
+
+        await interaction.response.defer(ephemeral=True)
         await handle_qr_rebuild(interaction, self.config, self.guild_id)
 
 async def handle_qr_rebuild(interaction: discord.Interaction, config: dict, guild_id: str):
