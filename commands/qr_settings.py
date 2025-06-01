@@ -52,12 +52,14 @@ class QRAdjustPanelView(discord.ui.View):
         spacing = self.config.get("custom_spacing", {}).get(obj, OBJECT_SIZE_ADJUSTMENTS.get(obj, 1.0))
         scale = self.config.get("custom_scale", {}).get(obj, self.config.get("defaultScale", 0.5))
         origin = self.config.get("origin_position", {"x": 5000.0, "y": 0.0, "z": 5000.0})
+        mirror = self.config.get("enable_mirror_test_kit", False)
 
         embed = discord.Embed(title="🔧 Adjust QR Settings", color=0x00ffff)
         embed.add_field(name="Object Type", value=f"`{obj}`", inline=True)
         embed.add_field(name="Spacing", value=f"`{spacing}`", inline=True)
         embed.add_field(name="Scale", value=f"`{scale}`", inline=True)
         embed.add_field(name="Origin", value=f"`X: {origin['x']}, Y: {origin['y']}, Z: {origin['z']}`", inline=False)
+        embed.add_field(name="Mirror Test Kit", value=f"`{'Enabled' if mirror else 'Disabled'}`", inline=False)
         return embed
 
     async def interaction_check(self, interaction: discord.Interaction):
@@ -108,6 +110,13 @@ class QRAdjustPanelView(discord.ui.View):
     @discord.ui.button(label="🌍 Adjust Origin", style=discord.ButtonStyle.secondary)
     async def adjust_origin(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(AdjustOriginModal(self))
+
+    @discord.ui.button(label="🪞 Toggle Mirror Test Kit", style=discord.ButtonStyle.secondary)
+    async def toggle_mirror(self, interaction: discord.Interaction, button: discord.ui.Button):
+        current = self.config.get("enable_mirror_test_kit", False)
+        self.config["enable_mirror_test_kit"] = not current
+        update_guild_config(self.guild_id, self.config)
+        await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
     @discord.ui.button(label="✅ Approve + Rebuild", style=discord.ButtonStyle.green)
     async def approve_and_rebuild(self, interaction: discord.Interaction, button: discord.ui.Button):
