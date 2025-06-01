@@ -41,7 +41,7 @@ def generate_qr_matrix(data: str, box_size: int = 1) -> list:
     qr.make(fit=True)
     return qr.get_matrix()
 
-def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None) -> list:
+def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict, scale: float = 1.0, spacing: float = None, include_mirror_kit: bool = False) -> list:
     rows = len(matrix)
     cols = len(matrix[0])
     resolved_type = OBJECT_CLASS_MAP.get(object_type, object_type)
@@ -65,6 +65,18 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
         "customString": ""
     }
     objects.append(camera_object)
+
+    # ✅ Optional mirror overlay for test grid backdrop
+    if include_mirror_kit:
+        mirror_object = {
+            "name": "Land_Mirror_Test_Kit",
+            "pos": [origin["x"], offset_y - 0.1, origin["z"]],
+            "ypr": [0.0, 0.0, 0.0],
+            "scale": 1.5,  # Large enough to cover the full grid
+            "enableCEPersistency": 0,
+            "customString": ""
+        }
+        objects.append(mirror_object)
 
     for row in range(rows):
         for col in range(cols):
@@ -110,7 +122,8 @@ if __name__ == "__main__":
         CONFIG["origin_position"],
         CONFIG["originOffset"],
         CONFIG.get("defaultScale", 0.5),
-        CONFIG.get("defaultSpacing", 1.0)
+        CONFIG.get("defaultSpacing", 1.0),
+        CONFIG.get("include_mirror_kit", False)
     )
     save_object_json(object_list, CONFIG["object_output_path"], CONFIG.get("selected_map", "Chernarus"), CONFIG["origin_position"])
     print(f"Generated {len(object_list)} objects including anchor.")
