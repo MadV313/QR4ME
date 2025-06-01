@@ -82,10 +82,15 @@ class AdjustQRSettings(discord.ui.View):
         current_scale = str(config.get("custom_scale", {}).get(current_obj, config.get("defaultScale", 0.5)))
         origin = config.get("origin_position", {"x": 5000.0, "y": 0.0, "z": 5000.0})
 
+        # Mark current object as default in the options list
+        options = [
+            discord.SelectOption(label=name, value=name, default=(name == current_obj))
+            for name in OBJECT_SIZE_ADJUSTMENTS.keys()
+        ]
+
         self.object_select = discord.ui.Select(
             placeholder="Select Object Type",
-            options=OBJECT_OPTIONS,
-            default=discord.SelectOption(label=current_obj, value=current_obj)
+            options=options
         )
         self.object_select.callback = self.select_object
         self.add_item(self.object_select)
@@ -100,10 +105,6 @@ class AdjustQRSettings(discord.ui.View):
             self.add_item(field)
 
         self.add_item(SubmitButton(self))
-
-    async def select_object(self, interaction: discord.Interaction):
-        selected = self.object_select.values[0]
-        await interaction.response.send_message(f"Selected: `{selected}`. Adjust values as needed, then press Submit.", ephemeral=True)
 
 class SubmitButton(discord.ui.Button):
     def __init__(self, view):
