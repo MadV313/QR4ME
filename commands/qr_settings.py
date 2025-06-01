@@ -197,7 +197,7 @@ async def handle_qr_rebuild(interaction: discord.Interaction, config: dict, guil
     matrix = generate_qr_matrix(qr_text)
     objects = qr_to_object_list(matrix, obj, origin, offset, scale, spacing)
 
-    # 🔁 Optional: Insert Mirror Test Kit if enabled
+    # Optional Mirror Test Kit
     if config.get("enable_mirror_test_kit"):
         mirror_obj = {
             "name": "MirrorTestKit",
@@ -209,7 +209,6 @@ async def handle_qr_rebuild(interaction: discord.Interaction, config: dict, guil
         }
         objects.insert(0, mirror_obj)
 
-    # ✅ Save JSON and render preview (but no ZIP)
     save_object_json(objects, config["object_output_path"])
     render_qr_preview(matrix, config["preview_output_path"], object_type=obj)
 
@@ -234,6 +233,6 @@ async def handle_qr_rebuild(interaction: discord.Interaction, config: dict, guil
         )
     await interaction.followup.send("✅ Settings applied and QR rebuilt.", ephemeral=True)
 
-# ✅ Needed to load this cog
+# ✅ Load this cog
 async def setup(bot):
     await bot.add_cog(QRSettings(bot))
