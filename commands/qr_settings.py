@@ -69,7 +69,11 @@ class ObjectInfoButtons(discord.ui.View):
 
     @discord.ui.button(label="⚙️ Adjust Settings", style=discord.ButtonStyle.blurple)
     async def adjust(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("🛠️ Adjust your QR settings below:", view=AdjustQRSettings(self.config, self.guild_id), ephemeral=True)
+        await interaction.response.send_message(
+            "🛠️ Adjust your QR settings below:",
+            view=AdjustQRSettings(self.config, self.guild_id),
+            ephemeral=True
+        )
 
 class AdjustQRSettings(discord.ui.View):
     def __init__(self, config, guild_id):
@@ -82,14 +86,9 @@ class AdjustQRSettings(discord.ui.View):
         current_scale = str(config.get("custom_scale", {}).get(current_obj, config.get("defaultScale", 0.5)))
         origin = config.get("origin_position", {"x": 5000.0, "y": 0.0, "z": 5000.0})
 
-        # Mark current object as default in the options list
-        options = [
-            discord.SelectOption(label=name, value=name)
-            for name in OBJECT_SIZE_ADJUSTMENTS.keys()
-        ]
         self.object_select = discord.ui.Select(
-            placeholder="Select Object Type",
-            options=options
+            placeholder=f"Current: {current_obj}",
+            options=OBJECT_OPTIONS
         )
         self.add_item(self.object_select)
 
@@ -114,11 +113,11 @@ class SubmitButton(discord.ui.Button):
         guild_id = self.custom_view.guild_id
 
         obj = self.custom_view.object_select.values[0]
-        spacing_val = float(self.custom_view.spacing_input.value) if self.custom_view.spacing_input.value else OBJECT_SIZE_ADJUSTMENTS.get(obj, 1.0)
-        scale_val = float(self.custom_view.scale_input.value) if self.custom_view.scale_input.value else 0.5
-        x = float(self.custom_view.x_input.value) if self.custom_view.x_input.value else 5000.0
-        y = float(self.custom_view.y_input.value) if self.custom_view.y_input.value else 0.0
-        z = float(self.custom_view.z_input.value) if self.custom_view.z_input.value else 5000.0
+        spacing_val = float(self.custom_view.spacing_input.value or OBJECT_SIZE_ADJUSTMENTS.get(obj, 1.0))
+        scale_val = float(self.custom_view.scale_input.value or 0.5)
+        x = float(self.custom_view.x_input.value or 5000.0)
+        y = float(self.custom_view.y_input.value or 0.0)
+        z = float(self.custom_view.z_input.value or 5000.0)
 
         config["default_object"] = obj
         config.setdefault("custom_spacing", {})[obj] = spacing_val
