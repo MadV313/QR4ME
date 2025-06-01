@@ -196,8 +196,23 @@ async def handle_qr_rebuild(interaction: discord.Interaction, config: dict, guil
 
     matrix = generate_qr_matrix(qr_text)
     objects = qr_to_object_list(matrix, obj, origin, offset, scale, spacing)
+
+    # 🔁 Optional: Insert Mirror Test Kit if enabled
+    if config.get("enable_mirror_test_kit"):
+        grid_width = len(matrix[0]) * spacing * scale
+        grid_height = len(matrix) * spacing * scale
+        mirror_obj = {
+            "name": "MirrorTestKit",
+            "pos": [origin["x"], origin["y"] - 0.01, origin["z"]],
+            "ypr": [0.0, 90.0, 0.0],
+            "scale": max(scale * 12, 10.0),
+            "enableCEPersistency": 0,
+            "customString": ""
+        }
+        objects.insert(0, mirror_obj)
+
     save_object_json(objects, config["object_output_path"])
-    render_qr_preview(matrix, config["preview_output_path"], object_type=config.get("default_object", obj))
+    render_qr_preview(matrix, config["preview_output_path"], object_type=obj)
     create_qr_zip(config["object_output_path"], config["preview_output_path"], config["zip_output_path"])
 
     channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
