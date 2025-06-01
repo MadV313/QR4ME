@@ -55,6 +55,8 @@ class QRImage(commands.Cog):
         guild_id = str(interaction.guild.id)
         config = get_guild_config(guild_id)
         origin = config.get("origin_position", {"x": 0.0, "y": 0.0, "z": 0.0})
+        offset = config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0})
+        mirror_enabled = config.get("use_mirror_testkit", False)
 
         # 🔁 Apply per-object overrides or fallback to global config
         scale = scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
@@ -75,14 +77,31 @@ class QRImage(commands.Cog):
 
         # Step 3: Generate object layout
         matrix = generate_qr_matrix(qr_text)
-        objects = qr_to_object_list(
-            matrix,
-            obj_type,
-            origin,
-            config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0}),
-            scale,
-            object_spacing
-        )
+        objects = qr_to_object_list(matrix, obj_type, origin, offset, scale, object_spacing)
+
+        # ✅ Step 3.5: Add MirrorTestKit if enabled
+        if mirror_enabled:
+            grid_width = len(matrix[0]) * object_spacing * scale
+            grid_height = len(matrix) * object_spacing * scale
+            mirror_obj = {
+                "type": "MirrorTestKit",
+                "position": {
+                    "x": origin["x"],
+                    "y": origin["y"] - 0.01,
+                    "z": origin["z"]
+                },
+                "rotation": {
+                    "x": 0.0,
+                    "y": 90.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": grid_width + 2.0,
+                    "y": 0.1,
+                    "z": grid_height + 2.0
+                }
+            }
+            objects.insert(0, mirror_obj)
 
         # Step 4: Save object JSON
         save_object_json(objects, config["object_output_path"])
