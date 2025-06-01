@@ -57,32 +57,43 @@ class QRBuild(commands.Cog):
         origin = config.get("origin_position", {"x": 0.0, "y": 0.0, "z": 0.0})
         offset = config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0})
 
-        # Use stored or fallback config values
+        # Use overrides or fallback config values
         overall_scale = overall_scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
         object_spacing = object_spacing or config.get("custom_spacing", {}).get(obj_type, config.get("defaultSpacing", 1.0))
 
         # Step 1: Generate QR matrix
         matrix = generate_qr_matrix(text)
 
-        # Step 2: Generate object list (mirror logic handled internally)
+        # Step 2: Generate object list with correct rotation
         mirror_enabled = add_mirror or config.get("enable_mirror_test_kit", False)
         config["enable_mirror_test_kit"] = mirror_enabled
-        objects = qr_to_object_list(matrix, obj_type, origin, offset, overall_scale, object_spacing, include_mirror_kit=mirror_enabled)
 
-        # Step 3: Save JSON
+        objects = qr_to_object_list(
+            matrix,
+            obj_type,
+            origin,
+            offset,
+            scale=overall_scale,
+            spacing=object_spacing,
+            include_mirror_kit=mirror_enabled
+        )
+
+        # Step 3: Save object layout JSON
         save_object_json(objects, config["object_output_path"])
 
         # Step 4: Render preview image
         render_qr_preview(matrix, config["preview_output_path"], object_type=obj_type)
 
-        # Step 5: Update and save config
+        # Step 5: Save updated config with correct increments
         config["default_object"] = obj_type
         config["defaultScale"] = overall_scale
+        config["defaultSpacing"] = object_spacing
+        config.setdefault("custom_scale", {})[obj_type] = overall_scale
         config.setdefault("custom_spacing", {})[obj_type] = object_spacing
         config["last_qr_data"] = text
         save_guild_config(guild_id, config)
 
-        # Step 6: Skip ZIP — just return JSON file
+        # Step 6: Create .zip bundle (JSON + PNG)
         final_path = create_qr_zip(
             config["object_output_path"],
             config["preview_output_path"],
@@ -97,7 +108,7 @@ class QRBuild(commands.Cog):
             export_mode="json"
         )
 
-        # Step 7: Send build summary
+        # Step 7: Post summary in gallery channel
         channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
         channel = self.bot.get_channel(int(channel_id)) if channel_id else None
 
