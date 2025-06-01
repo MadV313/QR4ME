@@ -41,10 +41,9 @@ class QRSettings(commands.Cog):
 
 class QRAdjustPanelView(discord.ui.View):
     def __init__(self, config, guild_id):
-        super().__init__(timeout=300)
+        super().__init__(timeout=600)
         self.config = config
         self.guild_id = guild_id
-        self.message = None
 
     def build_embed(self):
         obj = self.config.get("default_object", "SmallProtectiveCase")
@@ -64,7 +63,23 @@ class QRAdjustPanelView(discord.ui.View):
 
     @discord.ui.button(label="🧱 Adjust Object", style=discord.ButtonStyle.secondary)
     async def adjust_object(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(AdjustObjectModal(self))
+        options = [
+            discord.SelectOption(label=obj, value=obj)
+            for obj in OBJECT_SIZE_ADJUSTMENTS.keys()
+        ]
+        view = discord.ui.View(timeout=60)
+        select = discord.ui.Select(placeholder="Select object", options=options)
+
+        async def callback(i: discord.Interaction):
+            selected = select.values[0]
+            self.config["default_object"] = selected
+            update_guild_config(self.guild_id, self.config)
+            await i.message.edit(embed=self.build_embed(), view=self)
+            await i.response.defer()
+
+        select.callback = callback
+        view.add_item(select)
+        await interaction.response.send_message("🔄 Choose object:", view=view, ephemeral=True)
 
     @discord.ui.button(label="📏 Adjust Scale", style=discord.ButtonStyle.secondary)
     async def adjust_scale(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -86,18 +101,6 @@ class QRAdjustPanelView(discord.ui.View):
         await interaction.response.defer(ephemeral=True)
         await handle_qr_rebuild(interaction, self.config, self.guild_id)
 
-class AdjustObjectModal(discord.ui.Modal, title="Select QR Object"):
-    def __init__(self, view):
-        super().__init__()
-        self.view = view
-        self.add_item(discord.ui.TextInput(label="Object Type", placeholder="e.g. JerryCan", required=True))
-
-    async def on_submit(self, interaction: discord.Interaction):
-        obj = self.children[0].value
-        self.view.config["default_object"] = obj
-        update_guild_config(self.view.guild_id, self.view.config)
-        await interaction.response.edit_message(embed=self.view.build_embed(), view=self.view)
-
 class AdjustScaleModal(discord.ui.Modal, title="Set Scale"):
     def __init__(self, view):
         super().__init__()
@@ -105,11 +108,14 @@ class AdjustScaleModal(discord.ui.Modal, title="Set Scale"):
         self.add_item(discord.ui.TextInput(label="Scale", placeholder="e.g. 0.5", required=True))
 
     async def on_submit(self, interaction: discord.Interaction):
-        obj = self.view.config.get("default_object", "SmallProtectiveCase")
-        val = float(self.children[0].value)
-        self.view.config.setdefault("custom_scale", {})[obj] = val
-        update_guild_config(self.view.guild_id, self.view.config)
-        await interaction.response.edit_message(embed=self.view.build_embed(), view=self.view)
+        try:
+            obj = self.view.config.get("default_object", "SmallProtectiveCase")
+            val = float(self.children[0].value)
+            self.view.config.setdefault("custom_scale", {})[obj] = val
+            update_guild_config(self.view.guild_id, self.view.config)
+            await interaction.response.edit_message(embed=self.view.build_embed(), view=self.view)
+        except ValueError:
+            await interaction.response.send_message("❌ Invalid scale. Use a numeric value.", ephemeral=True)
 
 class AdjustSpacingModal(discord.ui.Modal, title="Set Spacing"):
     def __init__(self, view):
@@ -118,27 +124,37 @@ class AdjustSpacingModal(discord.ui.Modal, title="Set Spacing"):
         self.add_item(discord.ui.TextInput(label="Spacing", placeholder="e.g. 1.0", required=True))
 
     async def on_submit(self, interaction: discord.Interaction):
-        obj = self.view.config.get("default_object", "SmallProtectiveCase")
-        val = float(self.children[0].value)
-        self.view.config.setdefault("custom_spacing", {})[obj] = val
-        update_guild_config(self.view.guild_id, self.view.config)
-        await interaction.response.edit_message(embed=self.view.build_embed(), view=self.view)
+        try:
+            obj = self.view.config.get("default_object", "SmallProtectiveCase")
+            val = float(self.children[0].value)
+            self.view.config.setdefault("custom_spacing", {})[obj] = val
+            update_guild_config(self.view.guild_id, self.view.config)
+            await interaction.response.edit_message(embed=self.view.build_embed(), view=self.view)
+        except ValueError:
+            await interaction.response.send_message("❌ Invalid spacing. Use a numeric value.", ephemeral=True)
 
 class AdjustOriginModal(discord.ui.Modal, title="Set Origin Coordinates"):
     def __init__(self, view):
         super().__init__()
         self.view = view
-        self.add_item(discord.ui.TextInput(label="Origin X", placeholder="e.g. 5000.0"))
-        self.add_item(discord.ui.TextInput(label="Origin Y", placeholder="e.g. 0.0"))
-        self.add_item(discord.ui.TextInput(label="Origin Z", placeholder="e.g. 5000.0"))
+        origin = view.config.get("origin_position", {"x": 5000.0, "y": 0.0, "z": 5000.0})
+        self.x_input = discord.ui.TextInput(label="Origin X", default=str(origin["x"]), required=True)
+        self.y_input = discord.ui.TextInput(label="Origin Y", default=str(origin["y"]), required=True)
+        self.z_input = discord.ui.TextInput(label="Origin Z", default=str(origin["z"]), required=True)
+        self.add_item(self.x_input)
+        self.add_item(self.y_input)
+        self.add_item(self.z_input)
 
     async def on_submit(self, interaction: discord.Interaction):
-        x = float(self.children[0].value or 5000.0)
-        y = float(self.children[1].value or 0.0)
-        z = float(self.children[2].value or 5000.0)
-        self.view.config["origin_position"] = {"x": x, "y": y, "z": z}
-        update_guild_config(self.view.guild_id, self.view.config)
-        await interaction.response.edit_message(embed=self.view.build_embed(), view=self.view)
+        try:
+            x = float(self.x_input.value)
+            y = float(self.y_input.value)
+            z = float(self.z_input.value)
+            self.view.config["origin_position"] = {"x": x, "y": y, "z": z}
+            update_guild_config(self.view.guild_id, self.view.config)
+            await interaction.response.edit_message(embed=self.view.build_embed(), view=self.view)
+        except ValueError:
+            await interaction.response.send_message("❌ Invalid origin values. Use numeric coordinates.", ephemeral=True)
 
 async def handle_qr_rebuild(interaction: discord.Interaction, config: dict, guild_id: str):
     qr_text = config["last_qr_data"]
