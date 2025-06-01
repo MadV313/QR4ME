@@ -64,39 +64,25 @@ class QRBuild(commands.Cog):
         # Step 1: Generate QR matrix
         matrix = generate_qr_matrix(text)
 
-        # Step 2: Generate object list
-        objects = qr_to_object_list(matrix, obj_type, origin, offset, overall_scale, object_spacing)
-
-        # ✅ Step 2.5: Add MirrorTestKit if runtime toggle is enabled
+        # Step 2: Generate object list (mirror logic handled internally)
         mirror_enabled = add_mirror or config.get("enable_mirror_test_kit", False)
-        config["enable_mirror_test_kit"] = mirror_enabled  # <-- THIS LINE ensures the setting persists
-        if mirror_enabled:
-            grid_width = len(matrix[0]) * object_spacing * overall_scale
-            grid_height = len(matrix) * object_spacing * overall_scale
-            mirror_obj = {
-                "name": "MirrorTestKit",
-                "pos": [origin["x"], origin["y"] - 0.01, origin["z"]],
-                "ypr": [0.0, 90.0, 0.0],
-                "scale": max(overall_scale * 12, 10.0),
-                "enableCEPersistency": 0,
-                "customString": ""
-            }
-            objects.insert(0, mirror_obj)
+        config["enable_mirror_test_kit"] = mirror_enabled
+        objects = qr_to_object_list(matrix, obj_type, origin, offset, overall_scale, object_spacing, include_mirror_kit=mirror_enabled)
 
         # Step 3: Save JSON
         save_object_json(objects, config["object_output_path"])
 
-        # Step 4: Preview render (MirrorTestKit is not rendered in preview)
+        # Step 4: Render preview image
         render_qr_preview(matrix, config["preview_output_path"], object_type=obj_type)
 
-        # Step 5: Save updated config state
+        # Step 5: Update and save config
         config["default_object"] = obj_type
         config["defaultScale"] = overall_scale
         config.setdefault("custom_spacing", {})[obj_type] = object_spacing
         config["last_qr_data"] = text
         save_guild_config(guild_id, config)
 
-        # Step 6: ZIP creation
+        # Step 6: Skip ZIP — just return JSON file
         final_path = create_qr_zip(
             config["object_output_path"],
             config["preview_output_path"],
@@ -107,10 +93,11 @@ class QRBuild(commands.Cog):
                 f"Object Used: {obj_type}\n"
                 f"Scale: {overall_scale} | Spacing: {object_spacing}\n"
                 f"Mirror Test Kit: {'Enabled' if mirror_enabled else 'Disabled'}"
-            )
+            ),
+            export_mode="json"
         )
 
-        # Step 7: Send to gallery/admin channel
+        # Step 7: Send build summary
         channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
         channel = self.bot.get_channel(int(channel_id)) if channel_id else None
 
@@ -129,8 +116,8 @@ class QRBuild(commands.Cog):
                 f"• Mirror Test Kit: {'Enabled' if mirror_enabled else 'Disabled'}"
             ),
             files=[
-                discord.File(final_path),
-                discord.File(config["preview_output_path"])
+                discord.File(final_path, filename="objects.json"),
+                discord.File(config["preview_output_path"], filename="qr_preview.png")
             ]
         )
 
