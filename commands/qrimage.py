@@ -77,25 +77,11 @@ class QRImage(commands.Cog):
 
         # Step 2: Build matrix and objects
         matrix = generate_qr_matrix(qr_text)
-        objects = qr_to_object_list(matrix, obj_type, origin, offset, scale, object_spacing)
-
-        # ✅ Mirror toggle fallback
         mirror_enabled = add_mirror or config.get("enable_mirror_test_kit", False)
-        config["enable_mirror_test_kit"] = mirror_enabled  # <-- THIS LINE ensures the setting persists
-        if mirror_enabled:
-            grid_width = len(matrix[0]) * object_spacing * scale
-            grid_height = len(matrix) * object_spacing * scale
-            mirror_obj = {
-                "name": "MirrorTestKit",
-                "pos": [origin["x"], origin["y"] - 0.01, origin["z"]],
-                "ypr": [0.0, 90.0, 0.0],
-                "scale": max(scale * 12, 10.0),
-                "enableCEPersistency": 0,
-                "customString": ""
-            }
-            objects.insert(0, mirror_obj)
+        config["enable_mirror_test_kit"] = mirror_enabled
+        objects = qr_to_object_list(matrix, obj_type, origin, offset, scale, object_spacing, include_mirror_kit=mirror_enabled)
 
-        # Step 3: Save output
+        # Step 3: Save outputs
         save_object_json(objects, config["object_output_path"])
         render_qr_preview(matrix, config["preview_output_path"], object_type=obj_type)
 
@@ -106,21 +92,7 @@ class QRImage(commands.Cog):
         config["last_qr_data"] = qr_text
         save_guild_config(guild_id, config)
 
-        # Step 5: ZIP output
-        create_qr_zip(
-            config["object_output_path"],
-            config["preview_output_path"],
-            config["zip_output_path"],
-            extra_text=(
-                f"(from image)\nQR Size: {len(matrix)}x{len(matrix[0])}\n"
-                f"Total Objects: {len(objects)}\n"
-                f"Object Used: {obj_type}\n"
-                f"Scale: {scale} | Spacing: {object_spacing}\n"
-                f"Mirror Test Kit: {'Enabled' if mirror_enabled else 'Disabled'}"
-            )
-        )
-
-        # Step 6: Send to gallery
+        # Step 5: Send results to gallery
         channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
         channel = self.bot.get_channel(int(channel_id)) if channel_id else None
 
@@ -140,8 +112,8 @@ class QRImage(commands.Cog):
                 f"• Mirror Test Kit: {'Enabled' if mirror_enabled else 'Disabled'}"
             ),
             files=[
-                discord.File(config["zip_output_path"]),
-                discord.File(config["preview_output_path"])
+                discord.File(config["object_output_path"], filename="objects.json"),
+                discord.File(config["preview_output_path"], filename="qr_preview.png")
             ]
         )
 
