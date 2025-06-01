@@ -92,7 +92,6 @@ class AdjustQRSettings(discord.ui.View):
             placeholder="Select Object Type",
             options=options
         )
-        self.object_select.callback = self.select_object
         self.add_item(self.object_select)
 
         self.spacing_input = discord.ui.TextInput(label="Spacing (e.g. 1.0)", default=current_spacing, required=False)
