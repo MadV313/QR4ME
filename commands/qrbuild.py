@@ -68,7 +68,8 @@ class QRBuild(commands.Cog):
         objects = qr_to_object_list(matrix, obj_type, origin, offset, overall_scale, object_spacing)
 
         # ✅ Step 2.5: Add MirrorTestKit if runtime toggle is enabled
-        if add_mirror:
+        mirror_enabled = add_mirror or config.get("enable_mirror_test_kit", False)
+        if mirror_enabled:
             grid_width = len(matrix[0]) * object_spacing * overall_scale
             grid_height = len(matrix) * object_spacing * overall_scale
             mirror_obj = {
@@ -103,7 +104,8 @@ class QRBuild(commands.Cog):
                 f"QR Size: {len(matrix)}x{len(matrix[0])}\n"
                 f"Total Objects: {len(objects)}\n"
                 f"Object Used: {obj_type}\n"
-                f"Scale: {overall_scale} | Spacing: {object_spacing}"
+                f"Scale: {overall_scale} | Spacing: {object_spacing}\n"
+                f"Mirror Test Kit: {'Enabled' if mirror_enabled else 'Disabled'}"
             )
         )
 
@@ -122,7 +124,8 @@ class QRBuild(commands.Cog):
                 f"• Objects: {len(objects)}\n"
                 f"• Type: `{obj_type}`\n"
                 f"• Scale: `{overall_scale}` | Spacing: `{object_spacing}`\n"
-                f"• Origin: X: {origin['x']}, Y: {origin['y']}, Z: {origin['z']}"
+                f"• Origin: X: {origin['x']}, Y: {origin['y']}, Z: {origin['z']}\n"
+                f"• Mirror Test Kit: {'Enabled' if mirror_enabled else 'Disabled'}"
             ),
             files=[
                 discord.File(final_path),
