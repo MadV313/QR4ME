@@ -38,12 +38,14 @@ class QRSettings(commands.Cog):
         view = QRAdjustPanelView(config, guild_id)
         embed = view.build_embed()
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        view.message = await interaction.original_response()  # 🔧 Store reference to original message
 
 class QRAdjustPanelView(discord.ui.View):
     def __init__(self, config, guild_id):
-        super().__init__(timeout=600)
+        super().__init__(timeout=900)
         self.config = config
         self.guild_id = guild_id
+        self.message = None  # Will be set externally after response
 
     def build_embed(self):
         obj = self.config.get("default_object", "SmallProtectiveCase")
@@ -67,17 +69,18 @@ class QRAdjustPanelView(discord.ui.View):
             discord.SelectOption(label=obj, value=obj)
             for obj in OBJECT_SIZE_ADJUSTMENTS.keys()
         ]
-        view = discord.ui.View(timeout=60)
         select = discord.ui.Select(placeholder="Select object", options=options)
 
         async def callback(i: discord.Interaction):
             selected = select.values[0]
             self.config["default_object"] = selected
             update_guild_config(self.guild_id, self.config)
-            await i.message.edit(embed=self.build_embed(), view=self)
-            await i.response.defer()
+            await i.response.send_message(f"✅ Object changed to `{selected}`", ephemeral=True)
+            if self.message:
+                await self.message.edit(embed=self.build_embed(), view=self)
 
         select.callback = callback
+        view = discord.ui.View(timeout=60)
         view.add_item(select)
         await interaction.response.send_message("🔄 Choose object:", view=view, ephemeral=True)
 
