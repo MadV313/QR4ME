@@ -46,7 +46,6 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
     cols = len(matrix[0])
     resolved_type = OBJECT_CLASS_MAP.get(object_type, object_type)
 
-    # Default spacing is based on scale × object adjustment (legacy support)
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
 
     offset_x = origin["x"] - ((cols / 2) * spacing) + offset.get("x", 0)
@@ -55,27 +54,25 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
 
     objects = []
 
-    # ✅ Add camera object for orientation
-    camera_object = {
-        "name": "DoorTestCamera",
-        "pos": [origin["x"] + offset.get("x", 0), offset_y, origin["z"] + offset.get("z", 0)],
-        "ypr": [0.0, 90.0, 0.0],
-        "scale": 1.0,
-        "enableCEPersistency": 0,
-        "customString": ""
-    }
-    objects.append(camera_object)
-
-    # ✅ Optional mirror overlay for test grid backdrop
+    # ✅ Add test camera and mirror only if explicitly enabled
     if include_mirror_kit:
+        camera_object = {
+            "name": "DoorTestCamera",
+            "pos": [origin["x"] + offset.get("x", 0), offset_y, origin["z"] + offset.get("z", 0)],
+            "ypr": [0.0, 90.0, 0.0],
+            "scale": 1.0,
+            "enableCEPersistency": 0,
+            "customString": json.dumps({"mirror_enabled": True})
+        }
         mirror_object = {
             "name": "Land_Mirror_Test_Kit",
             "pos": [origin["x"], offset_y - 0.1, origin["z"]],
             "ypr": [0.0, 0.0, 0.0],
-            "scale": 1.5,  # Large enough to cover the full grid
+            "scale": 1.5,
             "enableCEPersistency": 0,
             "customString": ""
         }
+        objects.append(camera_object)
         objects.append(mirror_object)
 
     for row in range(rows):
@@ -96,20 +93,13 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
 
     return objects
 
-def save_object_json(object_list: list, output_path: str, map_name: str = "Unknown", origin: dict = None):
+def save_object_json(object_list: list, output_path: str):
     """
-    Save the object layout to JSON, including map + position metadata.
+    ✅ Save only { "Objects": [...] } for DayZ compatibility
     """
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-    json_data = {
-        "map": map_name,
-        "position": origin or {"x": 0, "y": 0, "z": 0},
-        "objects": object_list
-    }
-
     with open(output_path, "w") as f:
-        json.dump(json_data, f, indent=2)
+        json.dump({"Objects": object_list}, f, indent=2)
 
 # ✅ Manual test
 if __name__ == "__main__":
@@ -125,5 +115,5 @@ if __name__ == "__main__":
         CONFIG.get("defaultSpacing", 1.0),
         CONFIG.get("include_mirror_kit", False)
     )
-    save_object_json(object_list, CONFIG["object_output_path"], CONFIG.get("selected_map", "Chernarus"), CONFIG["origin_position"])
-    print(f"Generated {len(object_list)} objects including anchor.")
+    save_object_json(object_list, CONFIG["object_output_path"])
+    print(f"Generated {len(object_list)} objects.")
