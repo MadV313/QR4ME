@@ -103,7 +103,7 @@ class AdjustQRSettings(discord.ui.View):
 
     async def select_object(self, interaction: discord.Interaction):
         selected = self.object_select.values[0]
-        await interaction.response.send_message(f"Selected: `{selected}`. You can now edit fields and press Submit.", ephemeral=True)
+        await interaction.response.send_message(f"Selected: `{selected}`. Adjust values as needed, then press Submit.", ephemeral=True)
 
 class SubmitButton(discord.ui.Button):
     def __init__(self, view):
