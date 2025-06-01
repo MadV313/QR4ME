@@ -1,6 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+import asyncio
 
 from utils.config_utils import get_guild_config, update_guild_config
 from utils.permissions import is_admin_user
@@ -37,14 +38,14 @@ class QRSettings(commands.Cog):
         view = QRAdjustPanelView(config, guild_id)
         embed = view.build_embed()
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-        view.message = await interaction.original_response()  # 🔧 Store reference to original message
+        view.message = await interaction.original_response()
 
 class QRAdjustPanelView(discord.ui.View):
     def __init__(self, config, guild_id):
         super().__init__(timeout=900)
         self.config = config
         self.guild_id = guild_id
-        self.message = None  # Will be set externally after response
+        self.message = None
 
     def build_embed(self):
         obj = self.config.get("default_object", "SmallProtectiveCase")
@@ -69,18 +70,22 @@ class QRAdjustPanelView(discord.ui.View):
             for obj in OBJECT_SIZE_ADJUSTMENTS.keys()
         ]
         select = discord.ui.Select(placeholder="Select object", options=options)
+        view = discord.ui.View(timeout=60)
+        view.add_item(select)
 
         async def callback(i: discord.Interaction):
             selected = select.values[0]
             self.config["default_object"] = selected
             update_guild_config(self.guild_id, self.config)
-            await i.response.send_message(f"✅ Object changed to `{selected}`", ephemeral=True)
+            await i.response.send_message(f"✅ Object changed to `{selected}`", ephemeral=True, delete_after=2)
             if self.message:
                 await self.message.edit(embed=self.build_embed(), view=self)
+            try:
+                await i.message.delete()
+            except:
+                pass
 
         select.callback = callback
-        view = discord.ui.View(timeout=60)
-        view.add_item(select)
         await interaction.response.send_message("🔄 Choose object:", view=view, ephemeral=True)
 
     @discord.ui.button(label="📏 Adjust Scale", style=discord.ButtonStyle.secondary)
@@ -100,6 +105,11 @@ class QRAdjustPanelView(discord.ui.View):
         if "last_qr_data" not in self.config:
             await interaction.response.send_message("⚠️ No previous QR data found. Use `/qrimage` or `/qrbuild` first.", ephemeral=True)
             return
+        if self.message:
+            try:
+                await self.message.delete()
+            except:
+                pass
         await interaction.response.defer(ephemeral=True)
         await handle_qr_rebuild(interaction, self.config, self.guild_id)
 
@@ -191,6 +201,3 @@ async def handle_qr_rebuild(interaction: discord.Interaction, config: dict, guil
             ]
         )
     await interaction.followup.send("✅ Settings applied and QR rebuilt.", ephemeral=True)
-
-async def setup(bot):
-    await bot.add_cog(QRSettings(bot))
