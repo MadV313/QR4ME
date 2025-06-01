@@ -58,16 +58,15 @@ class QRImage(commands.Cog):
         offset = config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0})
         mirror_enabled = config.get("use_mirror_testkit", False)
 
-        # 🔁 Apply per-object overrides or fallback to global config
+        # 🔁 Use stored or fallback values
         scale = scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
         object_spacing = object_spacing or config.get("custom_spacing", {}).get(obj_type, config.get("defaultSpacing", 1.0))
 
-        # Step 1: Download image
+        # Step 1: Decode image to QR text
         img_bytes = await image.read()
         np_array = np.frombuffer(img_bytes, np.uint8)
         img = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
 
-        # Step 2: Decode QR
         decoded = decode(img)
         if not decoded:
             await interaction.followup.send("❌ Failed to decode QR code from the image.", ephemeral=True)
@@ -75,48 +74,38 @@ class QRImage(commands.Cog):
 
         qr_text = decoded[0].data.decode("utf-8")
 
-        # Step 3: Generate object layout
+        # Step 2: Generate object layout
         matrix = generate_qr_matrix(qr_text)
         objects = qr_to_object_list(matrix, obj_type, origin, offset, scale, object_spacing)
 
-        # ✅ Step 3.5: Add MirrorTestKit if enabled
+        # ✅ Step 2.5: Insert MirrorTestKit if enabled
         if mirror_enabled:
             grid_width = len(matrix[0]) * object_spacing * scale
             grid_height = len(matrix) * object_spacing * scale
             mirror_obj = {
-                "type": "MirrorTestKit",
-                "position": {
-                    "x": origin["x"],
-                    "y": origin["y"] - 0.01,
-                    "z": origin["z"]
-                },
-                "rotation": {
-                    "x": 0.0,
-                    "y": 90.0,
-                    "z": 0.0
-                },
-                "scale": {
-                    "x": grid_width + 2.0,
-                    "y": 0.1,
-                    "z": grid_height + 2.0
-                }
+                "name": "MirrorTestKit",
+                "pos": [origin["x"], origin["y"] - 0.01, origin["z"]],
+                "ypr": [0.0, 90.0, 0.0],
+                "scale": max(scale * 12, 10.0),
+                "enableCEPersistency": 0,
+                "customString": ""
             }
             objects.insert(0, mirror_obj)
 
-        # Step 4: Save object JSON
+        # Step 3: Save JSON
         save_object_json(objects, config["object_output_path"])
 
-        # Step 5: Render preview
+        # Step 4: Generate preview (MirrorTestKit is not rendered)
         render_qr_preview(matrix, config["preview_output_path"], object_type=obj_type)
 
-        # Step 6: Update config to track settings
+        # Step 5: Update config
         config["default_object"] = obj_type
         config["defaultScale"] = scale
         config.setdefault("custom_spacing", {})[obj_type] = object_spacing
         config["last_qr_data"] = qr_text
         save_guild_config(guild_id, config)
 
-        # Step 7: Create zip with only JSON
+        # Step 6: Package output
         create_qr_zip(
             config["object_output_path"],
             config["preview_output_path"],
@@ -129,7 +118,7 @@ class QRImage(commands.Cog):
             )
         )
 
-        # Step 8: Post to gallery or fallback admin channel
+        # Step 7: Upload to gallery/admin channel
         channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
         channel = self.bot.get_channel(int(channel_id)) if channel_id else None
 
