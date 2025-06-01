@@ -36,5 +36,8 @@ CONFIG = {
     "gallery_url": file_config.get("gallery_url", os.getenv("GALLERY_URL", "")),
 
     # Static permitted users fallback
-    "permitted_users": [str(uid) for uid in file_config.get("permitted_users", [])]
+    "permitted_users": [str(uid) for uid in file_config.get("permitted_users", [])],
+
+    # ✅ Toggle for including the mirror kit object behind the QR
+    "include_mirror_kit": file_config.get("include_mirror_kit", False)
 }
