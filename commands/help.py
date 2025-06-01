@@ -22,7 +22,10 @@ class Help(commands.Cog):
             value=(
                 "**/setorigin** — Set the in-game X/Y/Z coordinates for QR layout placement.\n"
                 "**/setmap** — Choose the DayZ map (e.g., Chernarus, Livonia, Sakhalin) and its coordinates.\n"
-                "**/objectinfo** — View current object scale, spacing, and grid size. Offers update or re-run options."
+                "**/objectinfo** — View and fine-tune object settings like scale, spacing, and origin.\n"
+                "  ➤ Toggle the Mirror Test Kit on/off for CE testing.\n"
+                "  ➤ Adjust object type used in builds.\n"
+                "  ➤ Rebuild the last QR layout using updated settings."
             ),
             inline=False
         )
