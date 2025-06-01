@@ -170,7 +170,7 @@ async def handle_qr_rebuild(interaction: discord.Interaction, config: dict, guil
     matrix = generate_qr_matrix(qr_text)
     objects = qr_to_object_list(matrix, obj, origin, offset, scale, spacing)
     save_object_json(objects, config["object_output_path"])
-    render_qr_preview(matrix, config["preview_output_path"], object_type=obj)
+    render_qr_preview(matrix, config["preview_output_path"], object_type=config.get("default_object", obj))
     create_qr_zip(config["object_output_path"], config["preview_output_path"], config["zip_output_path"])
 
     channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
