@@ -199,8 +199,6 @@ async def handle_qr_rebuild(interaction: discord.Interaction, config: dict, guil
 
     # 🔁 Optional: Insert Mirror Test Kit if enabled
     if config.get("enable_mirror_test_kit"):
-        grid_width = len(matrix[0]) * spacing * scale
-        grid_height = len(matrix) * spacing * scale
         mirror_obj = {
             "name": "MirrorTestKit",
             "pos": [origin["x"], origin["y"] - 0.01, origin["z"]],
@@ -211,9 +209,9 @@ async def handle_qr_rebuild(interaction: discord.Interaction, config: dict, guil
         }
         objects.insert(0, mirror_obj)
 
+    # ✅ Save JSON and render preview (but no ZIP)
     save_object_json(objects, config["object_output_path"])
     render_qr_preview(matrix, config["preview_output_path"], object_type=obj)
-    create_qr_zip(config["object_output_path"], config["preview_output_path"], config["zip_output_path"])
 
     channel_id = get_channel_id("gallery", guild_id) or config.get("admin_channel_id")
     channel = interaction.client.get_channel(int(channel_id)) if channel_id else None
@@ -230,7 +228,7 @@ async def handle_qr_rebuild(interaction: discord.Interaction, config: dict, guil
                 f"• Origin: X: {origin['x']}, Y: {origin['y']}, Z: {origin['z']}"
             ),
             files=[
-                discord.File(config["zip_output_path"]),
+                discord.File(config["object_output_path"], filename="layout.json"),
                 discord.File(config["preview_output_path"])
             ]
         )
