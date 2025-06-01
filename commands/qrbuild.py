@@ -71,22 +71,12 @@ class QRBuild(commands.Cog):
             grid_width = len(matrix[0]) * object_spacing * overall_scale
             grid_height = len(matrix) * object_spacing * overall_scale
             mirror_obj = {
-                "type": "MirrorTestKit",
-                "position": {
-                    "x": origin["x"],
-                    "y": origin["y"] - 0.01,
-                    "z": origin["z"]
-                },
-                "rotation": {
-                    "x": 0.0,
-                    "y": 90.0,
-                    "z": 0.0
-                },
-                "scale": {
-                    "x": grid_width + 2.0,
-                    "y": 0.1,
-                    "z": grid_height + 2.0
-                }
+                "name": "MirrorTestKit",
+                "pos": [origin["x"], origin["y"] - 0.01, origin["z"]],
+                "ypr": [0.0, 90.0, 0.0],
+                "scale": max(overall_scale * 12, 10.0),
+                "enableCEPersistency": 0,
+                "customString": ""
             }
             objects.insert(0, mirror_obj)
 
