@@ -14,7 +14,8 @@ DEFAULTS = {
     "selected_map": "Chernarus",
     "map_coordinates": {"x": 5000.0, "y": 0.0, "z": 5000.0},
     "custom_spacing": {},
-    "custom_scale": {}
+    "custom_scale": {},
+    "include_mirror_kit": False  # ✅ Toggle for mirror overlay backdrop
 }
 
 def get_guild_config(guild_id: int) -> dict:
