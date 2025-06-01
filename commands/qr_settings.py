@@ -77,11 +77,20 @@ class QRAdjustPanelView(discord.ui.View):
             selected = select.values[0]
             self.config["default_object"] = selected
             update_guild_config(self.guild_id, self.config)
-            await i.response.send_message(f"✅ Object changed to `{selected}`", ephemeral=True, delete_after=2)
+
+            confirm = await i.response.send_message(f"✅ Object changed to `{selected}`", ephemeral=True)
             if self.message:
                 await self.message.edit(embed=self.build_embed(), view=self)
+
             try:
                 await i.message.delete()
+            except:
+                pass
+
+            await asyncio.sleep(2)
+            try:
+                followup = await confirm
+                await followup.delete()
             except:
                 pass
 
@@ -201,3 +210,7 @@ async def handle_qr_rebuild(interaction: discord.Interaction, config: dict, guil
             ]
         )
     await interaction.followup.send("✅ Settings applied and QR rebuilt.", ephemeral=True)
+
+# ✅ Needed to load this cog
+async def setup(bot):
+    await bot.add_cog(QRSettings(bot))
