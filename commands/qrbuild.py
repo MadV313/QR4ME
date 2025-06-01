@@ -19,7 +19,8 @@ class QRBuild(commands.Cog):
         text="The text or URL to encode as a QR code",
         overall_scale="Overall object scale multiplier (default 0.5 or overridden per object)",
         object_spacing="Spacing between objects (default 1.0 or overridden per object)",
-        object_type="Choose the object to use for QR layout"
+        object_type="Choose the object to use for QR layout",
+        add_mirror="Add the MirrorTestKit background object (optional toggle)"
     )
     @app_commands.choices(
         object_type=[
@@ -41,7 +42,8 @@ class QRBuild(commands.Cog):
         text: str,
         object_type: app_commands.Choice[str],
         overall_scale: float = None,
-        object_spacing: float = None
+        object_spacing: float = None,
+        add_mirror: bool = False
     ):
         if not is_admin_user(interaction):
             await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
@@ -54,7 +56,6 @@ class QRBuild(commands.Cog):
         obj_type = object_type.value
         origin = config.get("origin_position", {"x": 0.0, "y": 0.0, "z": 0.0})
         offset = config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0})
-        mirror_enabled = config.get("use_mirror_testkit", False)
 
         # Use stored or fallback config values
         overall_scale = overall_scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
@@ -66,8 +67,8 @@ class QRBuild(commands.Cog):
         # Step 2: Generate object list
         objects = qr_to_object_list(matrix, obj_type, origin, offset, overall_scale, object_spacing)
 
-        # ✅ Step 2.5: Add MirrorTestKit if toggle is enabled
-        if mirror_enabled:
+        # ✅ Step 2.5: Add MirrorTestKit if runtime toggle is enabled
+        if add_mirror:
             grid_width = len(matrix[0]) * object_spacing * overall_scale
             grid_height = len(matrix) * object_spacing * overall_scale
             mirror_obj = {
