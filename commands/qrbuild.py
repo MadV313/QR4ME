@@ -53,8 +53,10 @@ class QRBuild(commands.Cog):
         config = get_guild_config(guild_id)
         obj_type = object_type.value
         origin = config.get("origin_position", {"x": 0.0, "y": 0.0, "z": 0.0})
+        offset = config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0})
+        mirror_enabled = config.get("use_mirror_testkit", False)
 
-        # 🔁 Use stored or fallback config values
+        # Use stored or fallback config values
         overall_scale = overall_scale or config.get("custom_scale", {}).get(obj_type, config.get("defaultScale", 0.5))
         object_spacing = object_spacing or config.get("custom_spacing", {}).get(obj_type, config.get("defaultSpacing", 1.0))
 
@@ -62,19 +64,36 @@ class QRBuild(commands.Cog):
         matrix = generate_qr_matrix(text)
 
         # Step 2: Generate object list
-        objects = qr_to_object_list(
-            matrix,
-            obj_type,
-            origin,
-            config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0}),
-            overall_scale,
-            object_spacing
-        )
+        objects = qr_to_object_list(matrix, obj_type, origin, offset, overall_scale, object_spacing)
+
+        # ✅ Step 2.5: Add MirrorTestKit if toggle is enabled
+        if mirror_enabled:
+            grid_width = len(matrix[0]) * object_spacing * overall_scale
+            grid_height = len(matrix) * object_spacing * overall_scale
+            mirror_obj = {
+                "type": "MirrorTestKit",
+                "position": {
+                    "x": origin["x"],
+                    "y": origin["y"] - 0.01,
+                    "z": origin["z"]
+                },
+                "rotation": {
+                    "x": 0.0,
+                    "y": 90.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": grid_width + 2.0,
+                    "y": 0.1,
+                    "z": grid_height + 2.0
+                }
+            }
+            objects.insert(0, mirror_obj)
 
         # Step 3: Save JSON
         save_object_json(objects, config["object_output_path"])
 
-        # Step 4: Preview render
+        # Step 4: Preview render (MirrorTestKit is not rendered in preview)
         render_qr_preview(matrix, config["preview_output_path"], object_type=obj_type)
 
         # Step 5: Save updated config state
