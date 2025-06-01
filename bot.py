@@ -33,7 +33,8 @@ def load_or_init_guild_config(guild_id: int, invoking_user_id: int) -> dict:
         "object_output_path": f"data/objects_{guild_id}.json",
         "zip_output_path": f"outputs/{guild_id}_qr.zip",
         "admin_channel_id": None,
-        "export_as_zip": True  # ✅ Toggle for default ZIP output
+        "export_as_zip": True,     # ✅ Toggle for default ZIP output
+        "include_mirror_kit": False  # ✅ Mirror kit toggle added to startup config
     }
 
     with open(path, "w") as f:
