@@ -118,6 +118,10 @@ class QRAdjustPanelView(discord.ui.View):
         update_guild_config(self.guild_id, self.config)
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
+    @discord.ui.button(label="🧮 Adjust Offset", style=discord.ButtonStyle.secondary)
+    async def adjust_offset(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(AdjustOffsetModal(self))
+        
     @discord.ui.button(label="✅ Approve + Rebuild", style=discord.ButtonStyle.green)
     async def approve_and_rebuild(self, interaction: discord.Interaction, button: discord.ui.Button):
         if "last_qr_data" not in self.config:
@@ -186,6 +190,30 @@ class AdjustOriginModal(discord.ui.Modal, title="Set Origin Coordinates"):
         except ValueError:
             await interaction.response.send_message("❌ Invalid origin values. Use numeric coordinates.", ephemeral=True)
 
+# ✅ New offset modal added in-place of original script
+class AdjustOffsetModal(discord.ui.Modal, title="Set Origin Offset"):
+    def __init__(self, view):
+        super().__init__()
+        self.view = view
+        offset = view.config.get("originOffset", {"x": 0.0, "y": 0.0, "z": 0.0})
+        self.x_input = discord.ui.TextInput(label="Offset X", default=str(offset["x"]), required=True)
+        self.y_input = discord.ui.TextInput(label="Offset Y", default=str(offset["y"]), required=True)
+        self.z_input = discord.ui.TextInput(label="Offset Z", default=str(offset["z"]), required=True)
+        self.add_item(self.x_input)
+        self.add_item(self.y_input)
+        self.add_item(self.z_input)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            x = float(self.x_input.value)
+            y = float(self.y_input.value)
+            z = float(self.z_input.value)
+            self.view.config["originOffset"] = {"x": x, "y": y, "z": z}
+            update_guild_config(self.view.guild_id, self.view.config)
+            await interaction.response.edit_message(embed=self.view.build_embed(), view=self.view)
+        except ValueError:
+            await interaction.response.send_message("❌ Invalid offset values. Use numeric coordinates.", ephemeral=True)
+            
 async def handle_qr_rebuild(interaction: discord.Interaction, config: dict, guild_id: str):
     qr_text = config["last_qr_data"]
     obj = config.get("default_object", "SmallProtectiveCase")
