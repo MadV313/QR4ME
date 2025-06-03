@@ -84,15 +84,11 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
                 base_x = offset_x + (col * spacing)
                 base_z = offset_z + (row * spacing)
 
-                # 🔁 Drift for realism per QR-pixel stack
-                drift_x = random.uniform(-0.015, 0.015)
-                drift_z = random.uniform(-0.015, 0.015)
-
                 for i in range(20):  # Stack of 20
                     y = round(top_y - i * y_step, 14)
                     obj = {
                         "name": resolved_type,
-                        "pos": [base_x + drift_x, y, base_z + drift_z],
+                        "pos": [base_x, y, base_z],
                         "ypr": [106.25797271728516, -3.9915712402027739e-10, -1.56961490915819e-7],
                         "scale": scale,
                         "enableCEPersistency": 0,
