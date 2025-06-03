@@ -1,6 +1,7 @@
 import os
 import qrcode
 import json
+import random
 
 # ✅ In-game object class mapping
 OBJECT_CLASS_MAP = {
@@ -81,11 +82,15 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
                 x = offset_x + (col * spacing)
                 z = offset_z + (row * spacing)
 
+                # ✅ Apply upright YPR with minor pitch/roll variation
+                pitch_variation = random.uniform(-0.05, 0.05)
+                roll_variation = random.uniform(-0.05, 0.05)
+
                 obj = {
                     "name": resolved_type,
                     "pos": [x, offset_y, z],
-                    "ypr": [106.25797271728516, -3.9915712402027737e-10, -1.56961490915819e-07],
-                    "scale": 0.04999890923500061,
+                    "ypr": [106.25, pitch_variation, roll_variation],
+                    "scale": 0.05,
                     "enableCEPersistency": 0,
                     "customString": ""
                 }
