@@ -31,6 +31,8 @@ OBJECT_SIZE_ADJUSTMENTS = {
     "Jerrycan": 1.0
 }
 
+MAX_OBJECTS = 800  # ✅ Dynamic object limit enforcement
+
 def generate_qr_matrix(data: str, box_size: int = 1) -> list:
     qr = qrcode.QRCode(
         version=3,  # ✅ 29x29 matrix
@@ -78,13 +80,20 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
         objects.append(camera_object)
         objects.append(mirror_object)
 
+    # ✅ Dynamically calculate safe layers per pixel
+    black_pixels = sum(1 for row in matrix for pixel in row if pixel)
+    layers_per_pixel = min(3, MAX_OBJECTS // max(black_pixels, 1))
+
     for row in range(rows):
         for col in range(cols):
             if matrix[row][col]:
                 base_x = offset_x + (col * spacing)
                 base_z = offset_z + (row * spacing)
 
-                for i in range(3):  # ✅ Reduced from 4 to 3
+                for i in range(layers_per_pixel):
+                    if len(objects) >= MAX_OBJECTS:
+                        return objects  # ✅ Enforce object count limit early
+
                     y = round(top_y - i * y_step, 14)
                     obj = {
                         "name": resolved_type,
@@ -92,7 +101,7 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
                         "ypr": [106.25797271728516, -3.9915712402027739e-10, -1.56961490915819e-7],
                         "scale": scale,
                         "enableCEPersistency": 0,
-                        "customString": ""  # ✅ Retained on every object
+                        "customString": ""
                     }
                     objects.append(obj)
 
