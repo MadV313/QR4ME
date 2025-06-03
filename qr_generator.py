@@ -17,7 +17,7 @@ OBJECT_CLASS_MAP = {
     "Jerrycan": "CanisterGasoline"
 }
 
-# ✅ Optional size tweaks per object for default spacing logic
+# ✅ Optional size tweaks per object
 OBJECT_SIZE_ADJUSTMENTS = {
     "SmallProtectiveCase": 1.0,
     "SmallProtectorCase": 1.0,
@@ -31,9 +31,12 @@ OBJECT_SIZE_ADJUSTMENTS = {
     "Jerrycan": 1.0
 }
 
+def roundf(val):
+    return round(val, 4)
+
 def generate_qr_matrix(data: str, box_size: int = 1) -> list:
     qr = qrcode.QRCode(
-        version=3,  # ✅ 29x29 matrix
+        version=3,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
         box_size=box_size,
         border=1
@@ -57,11 +60,10 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
 
     objects = []
 
-    # ✅ Optional test camera & mirror
     if include_mirror_kit:
         camera_object = {
             "name": "DoorTestCamera",
-            "pos": [origin["x"] + offset.get("x", 0), top_y, origin["z"] + offset.get("z", 0)],
+            "pos": [roundf(origin["x"] + offset.get("x", 0)), roundf(top_y), roundf(origin["z"] + offset.get("z", 0))],
             "ypr": [0.0, 90.0, 0.0],
             "scale": 1.0,
             "enableCEPersistency": 0,
@@ -69,14 +71,13 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
         }
         mirror_object = {
             "name": "Land_Mirror_Test_Kit",
-            "pos": [origin["x"], top_y - 0.1, origin["z"]],
+            "pos": [roundf(origin["x"]), roundf(top_y - 0.1), roundf(origin["z"])],
             "ypr": [0.0, 0.0, 0.0],
             "scale": 1.5,
             "enableCEPersistency": 0,
             "customString": ""
         }
-        objects.append(camera_object)
-        objects.append(mirror_object)
+        objects.extend([camera_object, mirror_object])
 
     for row in range(rows):
         for col in range(cols):
@@ -84,16 +85,18 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
                 base_x = offset_x + (col * spacing)
                 base_z = offset_z + (row * spacing)
 
-                for i in range(3):  # ✅ Reduced from 4 to 3
-                    y = round(top_y - i * y_step, 14)
+                for i in range(3):
+                    y = roundf(top_y - i * y_step)
                     obj = {
                         "name": resolved_type,
-                        "pos": [base_x, y, base_z],
-                        "ypr": [106.25797271728516, -3.9915712402027739e-10, -1.56961490915819e-7],
+                        "pos": [roundf(base_x), y, roundf(base_z)],
+                        "ypr": [roundf(106.25797271728516), 0.0, 0.0],
                         "scale": scale,
-                        "enableCEPersistency": 0,
-                        "customString": ""  # ✅ Retained on every object
+                        "enableCEPersistency": 0
                     }
+                    # Only add customString if needed
+                    if include_mirror_kit or i == 0:
+                        obj["customString"] = ""
                     objects.append(obj)
 
     return objects
@@ -101,7 +104,7 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
 def save_object_json(object_list: list, output_path: str):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as f:
-        json.dump({"Objects": object_list}, f, indent=2)
+        json.dump({"Objects": object_list}, f, separators=(',', ':'))  # No indent for minified output
 
 # ✅ Manual test
 if __name__ == "__main__":
