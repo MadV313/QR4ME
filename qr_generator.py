@@ -50,8 +50,10 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
 
     offset_x = origin["x"] - ((cols / 2) * spacing) + offset.get("x", 0)
-    offset_y = 0.079999998211860657  # ✅ Fixed Y-pos for all placed objects
     offset_z = origin["z"] - ((rows / 2) * spacing) + offset.get("z", 0)
+
+    top_y = 238.17279052734376  # ✅ Match SV_132 starting Y
+    y_step = 0.04  # ✅ Match SV_132 spacing down per stacked item
 
     objects = []
 
@@ -59,7 +61,7 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
     if include_mirror_kit:
         camera_object = {
             "name": "DoorTestCamera",
-            "pos": [origin["x"] + offset.get("x", 0), offset_y, origin["z"] + offset.get("z", 0)],
+            "pos": [origin["x"] + offset.get("x", 0), top_y, origin["z"] + offset.get("z", 0)],
             "ypr": [0.0, 90.0, 0.0],
             "scale": 1.0,
             "enableCEPersistency": 0,
@@ -67,7 +69,7 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
         }
         mirror_object = {
             "name": "Land_Mirror_Test_Kit",
-            "pos": [origin["x"], offset_y - 0.1, origin["z"]],
+            "pos": [origin["x"], top_y - 0.1, origin["z"]],
             "ypr": [0.0, 0.0, 0.0],
             "scale": 1.5,
             "enableCEPersistency": 0,
@@ -76,21 +78,27 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
         objects.append(camera_object)
         objects.append(mirror_object)
 
-    for row in range(rows):
-        for col in range(cols):
-            if matrix[row][col]:
-                x = offset_x + (col * spacing)
-                z = offset_z + (row * spacing)
+        for row in range(rows):
+            for col in range(cols):
+                if matrix[row][col]:
+                    x_base = offset_x + (col * spacing)
+                    z_base = offset_z + (row * spacing)
 
-                obj = {
-                    "name": resolved_type,
-                    "pos": [x, offset_y, z],
-                    "ypr": [106.25797271728516, -3.9915712402027739e-10, -1.56961490915819e-7],
-                    "scale": scale,
-                    "enableCEPersistency": 0,
-                    "customString": ""
-                }
-                objects.append(obj)
+                    # Optional micro drift to mimic SV_132 jitter
+                    drift_x = random.uniform(-0.015, 0.015)
+                    drift_z = random.uniform(-0.015, 0.015)
+
+                    for i in range(20):  # Stack height
+                        y = round(top_y - (i * y_step), 14)
+                        obj = {
+                            "name": resolved_type,
+                            "pos": [x_base + drift_x, y, z_base + drift_z],
+                            "ypr": [106.25797271728516, -3.9915712402027739e-10, -1.56961490915819e-7],
+                            "scale": scale,
+                            "enableCEPersistency": 0,
+                            "customString": ""
+                        }
+                        objects.append(obj)
 
     return objects
 
