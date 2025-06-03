@@ -81,16 +81,16 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
             if matrix[row][col]:
                 x = offset_x + (col * spacing)
                 z = offset_z + (row * spacing)
+                y = offset_y - (row * 0.04)  # ⬅️ Floating height offset by row
 
-                # ✅ Apply upright YPR with minor pitch/roll variation
                 pitch_variation = random.uniform(-0.05, 0.05)
                 roll_variation = random.uniform(-0.05, 0.05)
 
                 obj = {
                     "name": resolved_type,
-                    "pos": [x, offset_y, z],
-                    "ypr": [106.25, pitch_variation, roll_variation],
-                    "scale": 0.05,
+                    "pos": [x, y, z],
+                    "ypr": [106.25797271728516, pitch_variation, roll_variation],
+                    "scale": 0.04999890923500061,
                     "enableCEPersistency": 0,
                     "customString": ""
                 }
@@ -99,9 +99,7 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
     return objects
 
 def save_object_json(object_list: list, output_path: str):
-    """
-    ✅ Save only { "Objects": [...] } for DayZ compatibility
-    """
+    """ ✅ Save only { "Objects": [...] } for DayZ compatibility """
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as f:
         json.dump({"Objects": object_list}, f, indent=2)
