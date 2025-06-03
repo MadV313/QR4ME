@@ -50,7 +50,7 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
 
     offset_x = origin["x"] - ((cols / 2) * spacing) + offset.get("x", 0)
-    offset_y = origin["y"] + offset.get("y", 0)
+    offset_y = 0.079999998211860657  # ✅ Fixed Y-pos for all placed objects
     offset_z = origin["z"] - ((rows / 2) * spacing) + offset.get("z", 0)
 
     objects = []
@@ -81,15 +81,11 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
             if matrix[row][col]:
                 x = offset_x + (col * spacing)
                 z = offset_z + (row * spacing)
-                y = offset_y - (row * 0.04)  # ⬅️ Floating height offset by row
-
-                pitch_variation = random.uniform(-0.05, 0.05)
-                roll_variation = random.uniform(-0.05, 0.05)
 
                 obj = {
                     "name": resolved_type,
-                    "pos": [x, y, z],
-                    "ypr": [106.25797271728516, pitch_variation, roll_variation],
+                    "pos": [x, offset_y, z],
+                    "ypr": [106.25797271728516, 0.0, 0.0],  # ✅ Fixed YPR for all
                     "scale": scale,
                     "enableCEPersistency": 0,
                     "customString": ""
