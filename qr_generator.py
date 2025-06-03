@@ -33,8 +33,8 @@ OBJECT_SIZE_ADJUSTMENTS = {
 
 def generate_qr_matrix(data: str, box_size: int = 1) -> list:
     qr = qrcode.QRCode(
-        version=2,  # 🔧 Smaller matrix: 25x25
-        error_correction=qrcode.constants.ERROR_CORRECT_L,  # 🔧 Less black density
+        version=3,  # ✅ 29x29 matrix
+        error_correction=qrcode.constants.ERROR_CORRECT_L,  # ✅ Lower black density
         box_size=box_size,
         border=1
     )
@@ -84,7 +84,7 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
                 base_x = offset_x + (col * spacing)
                 base_z = offset_z + (row * spacing)
 
-                for i in range(4):  # 🔧 Reduced from 20 to 4
+                for i in range(4):  # ✅ 4 objects per black square
                     y = round(top_y - i * y_step, 14)
                     obj = {
                         "name": resolved_type,
