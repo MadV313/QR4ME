@@ -52,8 +52,8 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
     offset_x = origin["x"] - ((cols / 2) * spacing) + offset.get("x", 0)
     offset_z = origin["z"] - ((rows / 2) * spacing) + offset.get("z", 0)
 
-    top_y = 238.17279052734376  # ✅ Match SV_132 starting Y
-    y_step = 0.04  # ✅ Match SV_132 spacing down per stacked item
+    top_y = 238.17279052734376  # ✅ Top stack height
+    y_step = 0.04               # ✅ Step per object in vertical stack
 
     objects = []
 
@@ -78,27 +78,27 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
         objects.append(camera_object)
         objects.append(mirror_object)
 
-        for row in range(rows):
-            for col in range(cols):
-                if matrix[row][col]:
-                    x_base = offset_x + (col * spacing)
-                    z_base = offset_z + (row * spacing)
+    for row in range(rows):
+        for col in range(cols):
+            if matrix[row][col]:
+                base_x = offset_x + (col * spacing)
+                base_z = offset_z + (row * spacing)
 
-                    # Optional micro drift to mimic SV_132 jitter
-                    drift_x = random.uniform(-0.015, 0.015)
-                    drift_z = random.uniform(-0.015, 0.015)
+                # 🔁 Drift for realism per QR-pixel stack
+                drift_x = random.uniform(-0.015, 0.015)
+                drift_z = random.uniform(-0.015, 0.015)
 
-                    for i in range(20):  # Stack height
-                        y = round(top_y - (i * y_step), 14)
-                        obj = {
-                            "name": resolved_type,
-                            "pos": [x_base + drift_x, y, z_base + drift_z],
-                            "ypr": [106.25797271728516, -3.9915712402027739e-10, -1.56961490915819e-7],
-                            "scale": scale,
-                            "enableCEPersistency": 0,
-                            "customString": ""
-                        }
-                        objects.append(obj)
+                for i in range(20):  # Stack of 20
+                    y = round(top_y - i * y_step, 14)
+                    obj = {
+                        "name": resolved_type,
+                        "pos": [base_x + drift_x, y, base_z + drift_z],
+                        "ypr": [106.25797271728516, -3.9915712402027739e-10, -1.56961490915819e-7],
+                        "scale": scale,
+                        "enableCEPersistency": 0,
+                        "customString": ""
+                    }
+                    objects.append(obj)
 
     return objects
 
