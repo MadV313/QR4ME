@@ -33,7 +33,7 @@ OBJECT_SIZE_ADJUSTMENTS = {
 
 def generate_qr_matrix(data: str, box_size: int = 1) -> list:
     qr = qrcode.QRCode(
-        version=None,
+        version=6,  # ✅ Fixed to 43x43 matrix for consistent layout
         error_correction=qrcode.constants.ERROR_CORRECT_M,
         box_size=box_size,
         border=1
