@@ -99,6 +99,10 @@ class QRAdjustPanelView(discord.ui.View):
         select.callback = callback
         await interaction.response.send_message("🔄 Choose object:", view=view, ephemeral=True)
 
+        current_obj = self.config.get("default_object", "SmallProtectiveCase")
+        sorted_options = [current_obj] + [obj for obj in OBJECT_SIZE_ADJUSTMENTS if obj != current_obj]
+        options = [discord.SelectOption(label=obj, value=obj) for obj in sorted_options]
+
     @discord.ui.button(label="📏 Adjust Scale", style=discord.ButtonStyle.secondary)
     async def adjust_scale(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(AdjustScaleModal(self))
@@ -139,7 +143,8 @@ class AdjustScaleModal(discord.ui.Modal, title="Set Scale"):
     def __init__(self, view):
         super().__init__()
         self.view = view
-        self.add_item(discord.ui.TextInput(label="Scale", placeholder="e.g. 0.5", required=True))
+        current_scale = view.config.get("custom_scale", {}).get(view.config.get("default_object", "SmallProtectiveCase"), view.config.get("defaultScale", 0.5))
+        self.add_item(discord.ui.TextInput(label="Scale", default=str(current_scale), required=True))
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
@@ -155,7 +160,9 @@ class AdjustSpacingModal(discord.ui.Modal, title="Set Spacing"):
     def __init__(self, view):
         super().__init__()
         self.view = view
-        self.add_item(discord.ui.TextInput(label="Spacing", placeholder="e.g. 1.0", required=True))
+        obj = view.config.get("default_object", "SmallProtectiveCase")
+        current_spacing = view.config.get("custom_spacing", {}).get(obj, OBJECT_SIZE_ADJUSTMENTS.get(obj, 1.0))
+        self.add_item(discord.ui.TextInput(label="Spacing", default=str(current_spacing), required=True))
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
