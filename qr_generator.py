@@ -34,7 +34,7 @@ OBJECT_SIZE_ADJUSTMENTS = {
 def generate_qr_matrix(data: str, box_size: int = 1) -> list:
     qr = qrcode.QRCode(
         version=3,  # ✅ 29x29 matrix
-        error_correction=qrcode.constants.ERROR_CORRECT_L,  # ✅ Lower black density
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
         box_size=box_size,
         border=1
     )
@@ -52,12 +52,12 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
     offset_x = origin["x"] - ((cols / 2) * spacing) + offset.get("x", 0)
     offset_z = origin["z"] - ((rows / 2) * spacing) + offset.get("z", 0)
 
-    top_y = 238.17279052734376  # ✅ Top stack height
-    y_step = 0.04               # ✅ Step per object in vertical stack
+    top_y = 238.17279052734376
+    y_step = 0.04
 
     objects = []
 
-    # ✅ Add test camera and mirror only if explicitly enabled
+    # ✅ Optional test camera & mirror
     if include_mirror_kit:
         camera_object = {
             "name": "DoorTestCamera",
@@ -84,7 +84,7 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
                 base_x = offset_x + (col * spacing)
                 base_z = offset_z + (row * spacing)
 
-                for i in range(4):  # ✅ 4 objects per black square
+                for i in range(3):  # ✅ Reduced from 4 to 3
                     y = round(top_y - i * y_step, 14)
                     obj = {
                         "name": resolved_type,
@@ -92,14 +92,13 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
                         "ypr": [106.25797271728516, -3.9915712402027739e-10, -1.56961490915819e-7],
                         "scale": scale,
                         "enableCEPersistency": 0,
-                        "customString": ""
+                        "customString": ""  # ✅ Retained on every object
                     }
                     objects.append(obj)
 
     return objects
 
 def save_object_json(object_list: list, output_path: str):
-    """ ✅ Save only { "Objects": [...] } for DayZ compatibility """
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as f:
         json.dump({"Objects": object_list}, f, indent=2)
@@ -119,4 +118,4 @@ if __name__ == "__main__":
         CONFIG.get("include_mirror_kit", False)
     )
     save_object_json(object_list, CONFIG["object_output_path"])
-    print(f"Generated {len(object_list)} objects.")
+    print(f"✅ Generated {len(object_list)} objects.")
