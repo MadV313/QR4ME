@@ -81,27 +81,26 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
         objects.append(camera_object)
         objects.append(mirror_object)
 
-    # ✅ Force 3 layers per black pixel (up to MAX_OBJECTS)
+    # ✅ Single layer only (not stacked)
     for row in range(rows):
         for col in range(cols):
             if matrix[row][col]:
                 base_x = offset_x + (col * spacing)
                 base_z = offset_z + (row * spacing)
 
-                for i in range(3):  # ⬅️ Force 3 layers
-                    if len(objects) >= MAX_OBJECTS:
-                        return objects  # ✅ Enforce object count limit early
+                if len(objects) >= MAX_OBJECTS:
+                    return objects
 
-                    y = round(top_y - i * y_step, 14)
-                    obj = {
-                        "name": resolved_type,
-                        "pos": [base_x, y, base_z],
-                        "ypr": [106.25797271728516, -3.9915712402027739e-10, -1.56961490915819e-7],
-                        "scale": scale,
-                        "enableCEPersistency": 0,
-                        "customString": ""
-                    }
-                    objects.append(obj)
+                y = round(top_y, 14)
+                obj = {
+                    "name": resolved_type,
+                    "pos": [base_x, y, base_z],
+                    "ypr": [0.0, -3.9915712402027739e-10, -1.56961490915819e-7],  # ✅ Pitch + roll only
+                    "scale": scale,
+                    "enableCEPersistency": 0,
+                    "customString": ""
+                }
+                objects.append(obj)
 
     return objects
 
