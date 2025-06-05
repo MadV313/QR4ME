@@ -31,7 +31,7 @@ OBJECT_SIZE_ADJUSTMENTS = {
     "Jerrycan": 1.0
 }
 
-MAX_OBJECTS = 800  # ✅ Dynamic object limit enforcement
+MAX_OBJECTS = 950  # ⬆️ Increased object cap
 
 def generate_qr_matrix(data: str, box_size: int = 1) -> list:
     qr = qrcode.QRCode(
@@ -51,8 +51,9 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
 
     spacing = spacing if spacing is not None else scale * OBJECT_SIZE_ADJUSTMENTS.get(object_type, 1.0)
 
-    offset_x = origin["x"] - ((cols / 2) * spacing) + offset.get("x", 0)
-    offset_z = origin["z"] - ((rows / 2) * spacing) + offset.get("z", 0)
+    # ✅ FIXED: Prevents diagonal tilt by aligning to even spacing grid
+    offset_x = round(origin["x"] - ((cols // 2) * spacing) + offset.get("x", 0), 4)
+    offset_z = round(origin["z"] - ((rows // 2) * spacing) + offset.get("z", 0), 4)
 
     top_y = 238.17279052734376
     y_step = 0.04
@@ -80,17 +81,14 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
         objects.append(camera_object)
         objects.append(mirror_object)
 
-    # ✅ Dynamically calculate safe layers per pixel
-    black_pixels = sum(1 for row in matrix for pixel in row if pixel)
-    layers_per_pixel = min(3, MAX_OBJECTS // max(black_pixels, 1))
-
+    # ✅ Force 3 layers per black pixel (up to MAX_OBJECTS)
     for row in range(rows):
         for col in range(cols):
             if matrix[row][col]:
                 base_x = offset_x + (col * spacing)
                 base_z = offset_z + (row * spacing)
 
-                for i in range(layers_per_pixel):
+                for i in range(3):  # ⬅️ Force 3 layers
                     if len(objects) >= MAX_OBJECTS:
                         return objects  # ✅ Enforce object count limit early
 
