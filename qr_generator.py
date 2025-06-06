@@ -55,7 +55,7 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
     offset_x = round(origin["x"] - ((cols // 2) * spacing) + offset.get("x", 0), 4)
     offset_z = round(origin["z"] - ((rows // 2) * spacing) + offset.get("z", 0), 4)
 
-    top_y = top_y = origin["y"] + 0.1
+    top_y = origin["y"] + 0.1
     y_step = 0.04
 
     objects = []
@@ -95,7 +95,7 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
                 obj = {
                     "name": resolved_type,
                     "pos": [base_x, y, base_z],
-                    "ypr": [106.25797271728516, 0.0, 0.0]
+                    "ypr": [106.25797271728516, 0.0, 0.0],  # ✅ Upright orientation
                     "scale": scale,
                     "enableCEPersistency": 0,
                     "customString": ""
