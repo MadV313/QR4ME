@@ -73,7 +73,7 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
         mirror_object = {
             "name": "Land_Mirror_Test_Kit",
             "pos": [origin["x"], top_y - 0.1, origin["z"]],
-            "ypr": [0.0, 0.0, 0.0],
+            "ypr": [0.0, 90.0, 0.0],
             "scale": 1.5,
             "enableCEPersistency": 0,
             "customString": ""
@@ -95,7 +95,7 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
                 obj = {
                     "name": resolved_type,
                     "pos": [base_x, y, base_z],
-                    "ypr": [106.25797271728516, 0.0, 0.0],  # ✅ Upright orientation
+                    "ypr": [106.25797271728516, 90.0, 0.0],  # ✅ Upright orientation
                     "scale": scale,
                     "enableCEPersistency": 0,
                     "customString": ""
