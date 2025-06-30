@@ -48,29 +48,29 @@ class QRAdjustPanelView(discord.ui.View):
         self.message = None
 
     def build_embed(self):
-    obj = self.config.get("default_object", "SmallProtectiveCase")
-    spacing = self.config.get("custom_spacing", {}).get(obj, OBJECT_SIZE_ADJUSTMENTS.get(obj, 1.0))
-    scale = self.config.get("custom_scale", {}).get(obj, self.config.get("defaultScale", 0.5))
-    origin = self.config.get("origin_position", {"x": 5000.0, "y": 0.0, "z": 5000.0})
-    mirror = self.config.get("enable_mirror_test_kit", False)
-
-    embed = discord.Embed(title="🔧 Adjust QR Settings", color=0x00ffff)
-    embed.add_field(name="Object Type", value=f"`{obj}`", inline=True)
-    embed.add_field(name="Spacing", value=f"`{spacing}`", inline=True)
-    embed.add_field(name="Scale", value=f"`{scale}`", inline=True)
-    embed.add_field(
-        name="Origin (User Input)",
-        value=f"`X: {origin['x']}, Z: {origin['y']}`",  # 'y' holds user-facing 'Z'
-        inline=False
-    )
-    embed.add_field(name="Mirror Test Kit", value=f"`{'Enabled' if mirror else 'Disabled'}`", inline=False)
-    embed.add_field(
-        name="⚠️ Placement Warning",
-        value="Make sure your scale and spacing aren't too large or objects may overlap and render incorrectly in the DayZ editor.",
-        inline=False
-    )
-    return embed
-
+        obj = self.config.get("default_object", "SmallProtectiveCase")
+        spacing = self.config.get("custom_spacing", {}).get(obj, OBJECT_SIZE_ADJUSTMENTS.get(obj, 1.0))
+        scale = self.config.get("custom_scale", {}).get(obj, self.config.get("defaultScale", 0.5))
+        origin = self.config.get("origin_position", {"x": 5000.0, "y": 0.0, "z": 5000.0})
+        mirror = self.config.get("enable_mirror_test_kit", False)
+    
+        embed = discord.Embed(title="🔧 Adjust QR Settings", color=0x00ffff)
+        embed.add_field(name="Object Type", value=f"`{obj}`", inline=True)
+        embed.add_field(name="Spacing", value=f"`{spacing}`", inline=True)
+        embed.add_field(name="Scale", value=f"`{scale}`", inline=True)
+        embed.add_field(
+            name="Origin (User Input)",
+            value=f"`X: {origin['x']}, Z: {origin['y']}`",  # 'y' holds user-facing 'Z'
+            inline=False
+        )
+        embed.add_field(name="Mirror Test Kit", value=f"`{'Enabled' if mirror else 'Disabled'}`", inline=False)
+        embed.add_field(
+            name="⚠️ Placement Warning",
+            value="Make sure your scale and spacing aren't too large or objects may overlap and render incorrectly in the DayZ editor.",
+            inline=False
+        )
+        return embed
+    
     async def interaction_check(self, interaction: discord.Interaction):
         return is_admin_user(interaction)
 
