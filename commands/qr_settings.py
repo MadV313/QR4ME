@@ -58,7 +58,11 @@ class QRAdjustPanelView(discord.ui.View):
         embed.add_field(name="Object Type", value=f"`{obj}`", inline=True)
         embed.add_field(name="Spacing", value=f"`{spacing}`", inline=True)
         embed.add_field(name="Scale", value=f"`{scale}`", inline=True)
-        embed.add_field(name="Origin", value=f"`X: {origin['x']}, Y: {origin['y']}, Z: {origin['z']}`", inline=False)
+        embed.add_field(
+            name="Origin (User Input)",
+            value=f"`X: {origin['x']}, Z: {origin['y']}`",  # 'y' holds user-facing 'Z'
+            inline=False
+        )
         embed.add_field(name="Mirror Test Kit", value=f"`{'Enabled' if mirror else 'Disabled'}`", inline=False)
         return embed
 
@@ -179,20 +183,30 @@ class AdjustOriginModal(discord.ui.Modal, title="Set Origin Coordinates"):
         super().__init__()
         self.view = view
         origin = view.config.get("origin_position", {"x": 5000.0, "y": 0.0, "z": 5000.0})
-        self.x_input = discord.ui.TextInput(label="Origin X", default=str(origin["x"]), required=True)
-        self.y_input = discord.ui.TextInput(label="Origin Y", default=str(origin["y"]), required=True)
-        self.z_input = discord.ui.TextInput(label="Origin Z", default=str(origin["z"]), required=True)
+        
+        # Reverse-map for user-facing inputs
+        x_val = origin["x"]
+        z_val = origin["y"]  # stored as y, used as depth/z
+        y_val = origin["z"]  # stored as z, used as height
+
+        self.x_input = discord.ui.TextInput(label="Origin X", default=str(x_val), required=True)
+        self.z_input = discord.ui.TextInput(label="Origin Z (Depth)", default=str(z_val), required=True)
+        self.y_input = discord.ui.TextInput(label="Height (Y)", default=str(y_val), required=True)
+
         self.add_item(self.x_input)
-        self.add_item(self.y_input)
         self.add_item(self.z_input)
+        self.add_item(self.y_input)
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
             x = float(self.x_input.value)
-            y = float(self.y_input.value)
-            z = float(self.z_input.value)
-            self.view.config["origin_position"] = {"x": x, "y": y, "z": z}
+            z = float(self.z_input.value)  # becomes internal y
+            y = float(self.y_input.value)  # becomes internal z
+
+            # Re-map to match generator logic: [x, z, y]
+            self.view.config["origin_position"] = {"x": x, "y": z, "z": y}
             update_guild_config(self.view.guild_id, self.view.config)
+
             await interaction.response.edit_message(embed=self.view.build_embed(), view=self.view)
         except ValueError:
             await interaction.response.send_message("❌ Invalid origin values. Use numeric coordinates.", ephemeral=True)
