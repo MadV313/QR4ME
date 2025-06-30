@@ -94,7 +94,7 @@ def qr_to_object_list(matrix: list, object_type: str, origin: dict, offset: dict
                 y = round(top_y, 14)
                 obj = {
                     "name": resolved_type,
-                    "pos": [base_x, base_z, y],  # Swaps y (height) and z
+                    "pos": [base_x, y, base_z],  # Swaps y (height) and z
                     "ypr": [0.0, 0.0, 90.0],  # Rotate upright along correct axis
                     "scale": scale,
                     "enableCEPersistency": 0,
