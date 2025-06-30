@@ -66,7 +66,7 @@ class QRAdjustPanelView(discord.ui.View):
         embed.add_field(name="Mirror Test Kit", value=f"`{'Enabled' if mirror else 'Disabled'}`", inline=False)
         embed.add_field(
             name="⚠️ Placement Warning",
-            value="Make sure your scale and spacing aren't too large or objects may overlap and render incorrectly in the DayZ editor.",
+            value="Make sure your scale and spacing aren't too large/too small or objects may overlap and render incorrectly in the DayZ editor. Each Object Type will require its own unique scale and spacing",
             inline=False
         )
         return embed
