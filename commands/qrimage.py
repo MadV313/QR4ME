@@ -93,7 +93,9 @@ class QRImage(commands.Cog):
         )
 
         # Step 4: Save object JSON and preview
-        save_object_json(objects, config["object_output_path"])
+        qr_json_path = os.path.join("data", "QR4ME.json")
+        save_object_json(objects, qr_json_path)
+        config["object_output_path"] = qr_json_path  # set explicitly for reuse
         render_qr_preview(matrix, config["preview_output_path"], object_type=obj_type)
 
         # Step 5: Save config updates
@@ -125,7 +127,7 @@ class QRImage(commands.Cog):
                 f"• Mirror Test Kit: {'Enabled' if mirror_enabled else 'Disabled'}"
             ),
             files=[
-                discord.File(config["object_output_path"], filename="objects.json"),
+                discord.File(qr_json_path, filename="QR4ME.json"),
                 discord.File(config["preview_output_path"], filename="qr_preview.png")
             ]
         )
