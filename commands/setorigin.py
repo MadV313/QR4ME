@@ -11,9 +11,9 @@ class SetOrigin(commands.Cog):
 
     @app_commands.command(name="setorigin", description="Update the origin position for QR placement")
     @app_commands.describe(
-        x="X coordinate",
-        y="Y coordinate (default 0.0)",
-        z="Z coordinate"
+        x="X coordinate (left/right on map)",
+        z="Z coordinate (forward/back on map)",
+        y="Height (default 0.0)"
     )
     async def setorigin(self, interaction: discord.Interaction, x: float, z: float, y: float = 0.0):
         if not is_admin_user(interaction):
@@ -23,12 +23,17 @@ class SetOrigin(commands.Cog):
         guild_id = interaction.guild.id
         config = get_guild_config(guild_id)
 
-        config["origin_position"] = {"x": x, "y": y, "z": z}
+        # ⬇️ Internally map z ➝ y and y ➝ z for upright placement logic
+        config["origin_position"] = {
+            "x": x,       # same
+            "y": z,       # ⬅️ remapped
+            "z": y        # ⬅️ remapped
+        }
         save_guild_config(guild_id, config)
 
         await interaction.response.send_message(
             f"📍 **New origin position set for this server:**\n"
-            f"> `X`: {x}\n> `Y`: {y}\n> `Z`: {z}",
+            f"> `X`: {x}\n> `Z`: {z} (Depth)\n> `Height`: {y}",
             ephemeral=True
         )
 
