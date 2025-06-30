@@ -281,7 +281,7 @@ async def handle_qr_rebuild(interaction: discord.Interaction, config: dict, guil
                 f"• Origin: X: {origin['x']}, Y: {origin['y']}, Z: {origin['z']}"
             ),
             files=[
-                discord.File(config["object_output_path"], filename="layout.json"),
+                discord.File(config["object_output_path"], filename="QR4ME.json"),
                 discord.File(config["preview_output_path"])
             ]
         )
