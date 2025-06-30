@@ -79,7 +79,9 @@ class QRBuild(commands.Cog):
         )
 
         # Step 3: Save object layout JSON
-        save_object_json(objects, config["object_output_path"])
+        qr_json_path = os.path.join("data", "QR4ME.json")
+        save_object_json(objects, qr_json_path)
+        config["object_output_path"] = qr_json_path  # update config for reuse
 
         # Step 4: Render preview image
         render_qr_preview(matrix, config["preview_output_path"], object_type=obj_type)
@@ -127,7 +129,7 @@ class QRBuild(commands.Cog):
                 f"• Mirror Test Kit: {'Enabled' if mirror_enabled else 'Disabled'}"
             ),
             files=[
-                discord.File(final_path, filename="objects.json"),
+                discord.File(qr_json_path, filename="QR4ME.json"),
                 discord.File(config["preview_output_path"], filename="qr_preview.png")
             ]
         )
